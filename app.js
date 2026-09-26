@@ -9,7 +9,8 @@ const $bourse = document.getElementById('bourse');
 
 let donnees = charger();
 let pile = []; // écrans précédents, pour le bouton retour
-let nettoyage = null; // fonction à appeler en quittant un écran (mini-jeu en cours…)
+let nettoyage = null;
+let maitresseActive = null; // la maîtresse de l'enfant qui joue // fonction à appeler en quittant un écran (mini-jeu en cours…)
 
 /* ---------- Autocollants de l'album ---------- */
 const ALBUM = [
@@ -21,14 +22,15 @@ const ALBUM = [
 const CHANCES = { commun: 0.75, rare: 0.21, 'légendaire': 0.04 };
 
 function nouveauProfil(id, nom, niveau, avatar) {
-  return { id, nom, niveau, avatar, etoiles: 0, scores: {}, pieces: 0, tickets: 1, xp: 0, album: {}, records: {}, serie: { jour: '', n: 0 }, defi: '', jeuxDuJour: { jour: '', n: 0 } };
+  return { id, nom, niveau, avatar, maitresse: niveau === 'CP' ? 'panda' : 'leopard', etoiles: 0, scores: {}, pieces: 0, tickets: 1, xp: 0, album: {}, records: {}, serie: { jour: '', n: 0 }, defi: '', jeuxDuJour: { jour: '', n: 0 } };
 }
 function charger() {
   let d;
   try { d = JSON.parse(localStorage.getItem(CLE)); } catch (e) {}
-  if (!d || !d.profils) d = { profils: [nouveauProfil('p1', 'Mon grand', 'CM1', '🦊'), nouveauProfil('p2', 'Mon petit', 'CP', '🐻')] };
+  if (!d || !d.profils) d = { profils: [nouveauProfil('p1', 'Ma grande', 'CM1', '🦊'), nouveauProfil('p2', 'Ma petite', 'CP', '🐻')] };
   // Ajoute les champs des nouvelles versions aux anciens profils.
   d.profils = d.profils.map(p => ({ ...nouveauProfil(p.id, p.nom, p.niveau, p.avatar), ...p }));
+  d.profils.forEach(p => { if (p.nom === 'Mon grand') p.nom = 'Ma grande'; if (p.nom === 'Mon petit') p.nom = 'Ma petite'; });
   if (d.limiteMiniJeux === undefined) d.limiteMiniJeux = 5;
   return d;
 }
@@ -47,9 +49,12 @@ function parler(texte, lang = 'fr-FR', suite) {
   if (!('speechSynthesis' in window) || !texte) { suite && suite(); return; }
   const u = new SpeechSynthesisUtterance(texte.replace(/<[^>]+>/g, ' ').replace(/_+/g, ' blanc '));
   u.lang = lang; u.rate = lang === 'fr-FR' ? 0.95 : 0.8;
-  const voix = speechSynthesis.getVoices().find(v => v.lang && v.lang.replace('_', '-').startsWith(lang.slice(0, 2)));
+  const voix = lang === 'fr-FR' ? voixMaitresse() : speechSynthesis.getVoices().find(v => v.lang && v.lang.replace('_', '-').startsWith(lang.slice(0, 2)));
   if (voix) u.voice = voix;
-  if (suite) u.onend = suite;
+  if (lang === 'fr-FR' && maitresseActive) u.pitch = MAITRESSES[maitresseActive].pitch;
+  u.onstart = () => document.body.classList.add('parle');
+  u.onend = () => { document.body.classList.remove('parle'); suite && suite(); };
+  u.onerror = () => document.body.classList.remove('parle');
   speechSynthesis.speak(u);
 }
 function lireQuestion(q, avecChoix) {
@@ -61,7 +66,7 @@ function lireQuestion(q, avecChoix) {
     else if (choixLisibles) parler(q.choix.join(', ou, '));
   });
 }
-function taire() { if ('speechSynthesis' in window) speechSynthesis.cancel(); }
+function taire() { if ('speechSynthesis' in window) speechSynthesis.cancel(); document.body.classList.remove('parle'); }
 
 /* ---------- Écrans ---------- */
 function afficher(titre, html, options = {}) {
@@ -87,6 +92,7 @@ function accueil() {
   quitter();
   pile = [];
   ecranActuel = accueil;
+  maitresseActive = null;
   afficher('Mes Petits Jeux d\'École', `
     <p class="sous-titre">Qui joue aujourd'hui ?</p>
     <div class="grille">
@@ -113,16 +119,19 @@ function maison(p) {
   const nbAlbum = Object.keys(p.album).length;
   const defiFait = p.defi === jour;
   const lecture = NIVEAUX[p.niveau].lecture;
+  maitresseActive = p.maitresse;
+  const mt = MAITRESSES[p.maitresse];
   const bulle = pioche([
-    `Coucou ${echapper(p.nom)} ! On joue ?`,
+    pioche(mt.salut),
+    `Coucou ${echapper(p.nom)} ! C'est moi, ${mt.nom}.`,
     p.tickets ? `Tu as ${p.tickets} ticket${p.tickets > 1 ? 's' : ''} pour la salle de jeux !` : 'Gagne 2 étoiles dans un jeu pour avoir un ticket !',
     defiFait ? 'Bravo, tu as fait le défi du jour !' : 'Le défi du jour t\'attend !',
     p.pieces >= PRIX_OEUF ? 'Tu peux ouvrir un œuf surprise dans ton album !' : `Encore ${PRIX_OEUF - p.pieces} pièces pour un œuf surprise !`
   ]);
   afficher(`${p.avatar} ${p.nom}`, `
     <div class="mascotte">
-      <div class="perso rebond">${p.avatar}</div>
-      <div class="bulle">${bulle}</div>
+      <div class="perso-maitresse">${dessinMaitresse(p.maitresse, 'normal')}</div>
+      <div class="bulle"><b>${mt.nom}</b><br>${bulle}</div>
     </div>
     <div class="niveau">
       <b>Niveau ${niv}</b>
@@ -135,7 +144,7 @@ function maison(p) {
       <button class="tuile" style="--c:#8e5cd9" data-porte="salle"><span class="emoji">🎮</span>Salle de jeux<small>${p.tickets} 🎟️</small></button>
       <button class="tuile" style="--c:#1fa5a5" data-porte="album"><span class="emoji">📒</span>Mon album<small>${nbAlbum} / ${ALBUM.length}</small></button>
     </div>`, { retour: true, profil: p });
-  if (lecture) parler(bulle);
+  parler(bulle);
   $ecran.querySelectorAll('[data-porte]').forEach(b => b.onclick = () => {
     const porte = b.dataset.porte;
     if (porte === 'apprendre') aller(() => matieres(p));
@@ -183,6 +192,8 @@ function jeuDefi(p) {
 
 function partie(p, m, jeu) {
   let n = 0, reussies = 0, combo = 0, meilleurCombo = 0;
+  maitresseActive = p.maitresse;
+  const mt = MAITRESSES[p.maitresse];
   const lecture = NIVEAUX[p.niveau].lecture;
   const deja = new Set();
 
@@ -200,7 +211,8 @@ function partie(p, m, jeu) {
           <div class="progression"><div style="width:${n / NB_QUESTIONS * 100}%"></div><span class="coureur" style="left:max(16px, ${n / NB_QUESTIONS * 100}%)">${p.avatar}</span></div>
           <div class="combo ${combo >= 2 ? 'visible' : ''}">🔥 ×${combo}</div>
         </div>
-        <div class="question entre">
+        <div class="question entre avec-maitresse">
+          <div class="prof-coin">${dessinMaitresse(p.maitresse, 'normal')}<div class="bulle-prof"></div></div>
           ${jeu.defi ? `<div class="aide">${mq.emoji} ${mq.titre}</div>` : ''}
           <div class="visuel">${q.visuel || ''}</div>
           <div class="enonce">${typo(q.enonce)}</div>
@@ -213,9 +225,17 @@ function partie(p, m, jeu) {
     if (ec) ec.onclick = () => lireQuestion(q, !(lecture && mq.id === 'francais'));
     if (lecture || q.direEn || q.type === 'saisie') setTimeout(() => lireQuestion(q, false), 250);
 
+    function reagit(humeur, texte, dire) {
+      const coin = $ecran.querySelector('.prof-coin');
+      if (!coin) return;
+      coin.innerHTML = `${dessinMaitresse(p.maitresse, humeur)}<div class="bulle-prof visible">${texte}</div>`;
+      coin.classList.remove('saute'); void coin.offsetWidth; coin.classList.add('saute');
+      if (dire) { taire(); parler(texte); }
+    }
     function gagne(el) {
       if (premierEssai) { reussies++; combo++; meilleurCombo = Math.max(meilleurCombo, combo); } else combo = 0;
       son(combo >= 3 && premierEssai ? 'bonus' : 'bon');
+      reagit('contente', combo >= 3 && premierEssai ? `Waouh, ${combo} d'affilée !` : pioche(mt.bravo), false);
       if (el) confettis(el, premierEssai ? (combo >= 3 ? 26 : 14) : 6);
       if (premierEssai) {
         const c = $ecran.querySelector('.combo');
@@ -229,6 +249,7 @@ function partie(p, m, jeu) {
       premierEssai = false; erreurs++; combo = 0;
       const c = $ecran.querySelector('.combo'); c.classList.remove('visible');
       son('faux');
+      reagit('encourage', pioche(mt.oups), lecture);
       if (el) { el.classList.remove('faux'); void el.offsetWidth; el.classList.add('faux'); }
     }
 
@@ -294,6 +315,7 @@ function partie(p, m, jeu) {
     const msg = jeu.defi && nbEt === 0 ? 'Presque ! Il faut 3 bonnes réponses pour réussir le défi.' : nbEt === 3 ? 'Bravo, c\'est parfait !' : nbEt === 2 ? 'Très bien joué !' : nbEt === 1 ? 'C\'est bien, continue !' : 'On réessaie ensemble ?';
     afficher(`${jeu.emoji} ${jeu.titre}`, `
       <div class="bravo">
+        <div class="fin-maitresse">${dessinMaitresse(p.maitresse, nbEt ? 'contente' : 'encourage')}</div>
         <div class="gros">${nbEt ? [1, 2, 3].map(i => `<span class="etoile ${i <= nbEt ? 'pleine' : ''}" style="animation-delay:${i * .25}s">⭐</span>`).join('') : '💪'}</div>
         <p>${msg}<br><small>${reussies} bonnes réponses du premier coup sur ${NB_QUESTIONS}${meilleurCombo >= 3 ? ` · meilleure série 🔥 ${meilleurCombo}` : ''}</small></p>
         <div class="gains">
@@ -485,6 +507,10 @@ function reglages() {
         <label>Classe</label>
         <select data-i="${i}" data-k="niveau" style="font-size:22px;padding:8px;border-radius:12px">
           ${Object.keys(NIVEAUX).map(n => `<option ${n === p.niveau ? 'selected' : ''}>${n}</option>`).join('')}
+        </select>
+        <label>Maîtresse</label>
+        <select data-i="${i}" data-k="maitresse" style="font-size:22px;padding:8px;border-radius:12px">
+          ${Object.entries(MAITRESSES).map(([k, m]) => `<option value="${k}" ${k === p.maitresse ? 'selected' : ''}>${m.nom} (${m.animal})</option>`).join('')}
         </select>
         <label>Avatar</label>
         <div>${AVATARS.map(av => `<button class="rond" style="margin:4px;${av === p.avatar ? 'outline:4px solid #ff8a3d' : ''}" data-i="${i}" data-av="${av}">${av}</button>`).join('')}</div>
