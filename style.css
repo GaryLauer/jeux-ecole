@@ -1,0 +1,76 @@
+:root {
+  --fond: #fff8ec;
+  --texte: #2d2a32;
+  --orange: #ff8a3d;
+  --vert: #3bb273;
+  --rouge: #e5484d;
+  --carte: #ffffff;
+  --ombre: 0 6px 0 rgba(0,0,0,.12);
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--fond);
+  color: var(--texte);
+  font-family: "Comic Sans MS", "Chalkboard SE", "Trebuchet MS", system-ui, sans-serif;
+  user-select: none; -webkit-user-select: none;
+  display: flex; flex-direction: column;
+}
+header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; padding-top: max(12px, env(safe-area-inset-top));
+  background: var(--orange); color: #fff;
+}
+header h1 { flex: 1; margin: 0; font-size: clamp(20px, 4vw, 30px); }
+#etoiles { font-size: 24px; font-weight: bold; background: rgba(255,255,255,.25); padding: 6px 14px; border-radius: 30px; }
+button { font-family: inherit; cursor: pointer; border: none; }
+.rond { width: 52px; height: 52px; border-radius: 50%; font-size: 26px; background: #fff; color: var(--orange); box-shadow: var(--ombre); }
+main { flex: 1; padding: 20px 16px 40px; max-width: 1000px; width: 100%; margin: 0 auto; }
+.sous-titre { text-align: center; font-size: clamp(20px, 3.5vw, 28px); margin: 8px 0 20px; }
+.grille { display: grid; gap: 18px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+.tuile {
+  background: var(--c, var(--carte)); color: #fff;
+  border-radius: 24px; padding: 22px 14px; min-height: 150px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: var(--ombre); font-size: 22px; font-weight: bold; text-align: center;
+  transition: transform .1s;
+}
+.tuile:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,.12); }
+.tuile .emoji { font-size: 56px; line-height: 1; }
+.tuile small { font-size: 15px; font-weight: normal; opacity: .95; }
+.profil { min-height: 220px; font-size: 30px; }
+.profil .emoji { font-size: 90px; }
+.lien { background: none; color: #8a7f70; text-decoration: underline; font-size: 16px; margin: 30px auto 0; display: block; }
+
+/* Jeu */
+.jeu { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+.progression { width: 100%; height: 16px; background: #f1e3cc; border-radius: 10px; overflow: hidden; }
+.progression div { height: 100%; background: var(--vert); transition: width .3s; }
+.question {
+  background: var(--carte); border-radius: 24px; box-shadow: var(--ombre);
+  padding: 24px; width: 100%; text-align: center;
+}
+.question .visuel { font-size: clamp(44px, 9vw, 80px); line-height: 1.2; margin-bottom: 10px; word-break: break-word; }
+.question .enonce { font-size: clamp(22px, 4.5vw, 34px); font-weight: bold; }
+.question .aide { font-size: 18px; color: #7a7066; margin-top: 8px; }
+.ecouter { background: #ffe1c9; color: var(--texte); border-radius: 30px; padding: 8px 18px; font-size: 20px; margin-top: 12px; }
+.choix { display: grid; gap: 14px; width: 100%; grid-template-columns: repeat(2, 1fr); }
+.choix button {
+  background: var(--carte); color: var(--texte); border-radius: 20px; padding: 20px 10px;
+  font-size: clamp(22px, 4.5vw, 34px); font-weight: bold; box-shadow: var(--ombre); min-height: 90px;
+  border: 4px solid transparent;
+}
+.choix button.bon { background: var(--vert); color: #fff; }
+.choix button.faux { background: var(--rouge); color: #fff; animation: secoue .4s; }
+.choix button:disabled { opacity: 1; }
+@keyframes secoue { 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+.bravo { text-align: center; }
+.bravo .gros { font-size: 100px; }
+.bravo p { font-size: 28px; }
+.bouton { background: var(--orange); color: #fff; font-size: 26px; font-weight: bold; padding: 16px 30px; border-radius: 40px; box-shadow: var(--ombre); margin: 8px; }
+.bouton.second { background: #fff; color: var(--orange); }
+.parent label { display: block; font-size: 20px; margin: 14px 0 6px; }
+.parent input { font-size: 22px; padding: 10px; border-radius: 12px; border: 2px solid #e5d6bd; width: 100%; font-family: inherit; }
+.parent table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 17px; }
+.parent td, .parent th { padding: 8px; border-bottom: 1px solid #eadcc5; text-align: left; }
+@media (max-width: 480px) { .grille { grid-template-columns: 1fr 1fr; gap: 12px; } .tuile { min-height: 120px; font-size: 18px; } .tuile .emoji { font-size: 42px; } }
