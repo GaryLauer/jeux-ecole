@@ -1,5 +1,5 @@
-const CACHE = 'jeux-ecole-v2';
-const FILES = ['./', './index.html', './style.css', './app.js', './jeux.js', './cp-plus.js', './cm1-plus.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
+const CACHE = 'jeux-ecole-v3';
+const FILES = ['./', './index.html', './style.css', './app.js', './jeux.js', './cp-plus.js', './cm1-plus.js', './minijeux.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))); self.clients.claim(); });
 self.addEventListener('fetch', e => { e.respondWith(caches.match(e.request, { ignoreSearch: true }).then(r => r || fetch(e.request))); });
