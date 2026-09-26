@@ -74,3 +74,19 @@ main { flex: 1; padding: 20px 16px 40px; max-width: 1000px; width: 100%; margin:
 .parent table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 17px; }
 .parent td, .parent th { padding: 8px; border-bottom: 1px solid #eadcc5; text-align: left; }
 @media (max-width: 480px) { .grille { grid-template-columns: 1fr 1fr; gap: 12px; } .tuile { min-height: 120px; font-size: 18px; } .tuile .emoji { font-size: 42px; } }
+/* Écrire un mot avec des lettres */
+.mot { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.mot span { width: 54px; height: 64px; border-bottom: 5px solid #d9c7a8; font-size: 42px; font-weight: bold; text-align: center; line-height: 64px; }
+.mot span.plein { border-color: var(--vert); }
+.mot.bon span { color: var(--vert); }
+.tuiles { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.tuiles button { width: 72px; height: 72px; border-radius: 16px; background: #fff; box-shadow: var(--ombre); font-size: 38px; font-weight: bold; color: var(--texte); }
+.tuiles button.utilise { opacity: .25; }
+.tuiles button.faux, .saisie input.faux { animation: secoue .4s; }
+/* Écrire au clavier */
+.saisie { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; }
+.saisie input { font-size: 32px; padding: 14px 18px; border-radius: 18px; border: 4px solid #e5d6bd; width: min(100%, 520px); text-align: center; font-family: inherit; }
+.saisie input.bon { border-color: var(--vert); color: var(--vert); }
+.saisie input.faux { border-color: var(--rouge); }
+.correction { font-size: 26px; }
+.question svg { display: block; margin: 0 auto; }

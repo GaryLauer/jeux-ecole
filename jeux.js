@@ -203,7 +203,7 @@ const SCIENCES = [
   { q: 'Quel organe pompe le sang dans le corps ?', v: '🫀', b: 'Le cœur', f: ['Les poumons', 'L\'estomac', 'Le cerveau'] },
   { q: 'Avec quels organes respire-t-on ?', v: '🫁', b: 'Les poumons', f: ['Le cœur', 'Les reins', 'Le foie'] },
   { q: 'Comment s\'appelle l\'ensemble des os du corps ?', v: '🦴', b: 'Le squelette', f: ['Les muscles', 'La peau', 'Le sang'] },
-  { q: 'Quelles dents servent à broyer les aliments ?', v: '🦷', b: 'Les molaires', f: ['Les incisives', 'Les canines', 'Les dents de lait'] },
+  { q: 'Quelles dents servent à broyer les aliments ?', v: '🦷', b: 'Les molaires', f: ['Les incisives', 'Les canines', 'Les gencives'] },
   { q: 'Combien de temps met la Terre pour faire le tour du Soleil ?', v: '🌍☀️', b: 'Un an', f: ['Un jour', 'Un mois', 'Une semaine'] },
   { q: 'Combien de temps met la Terre pour tourner sur elle-même ?', v: '🌍', b: 'Un jour (24 h)', f: ['Une heure', 'Un an', 'Un mois'] },
   { q: 'La Lune est…', v: '🌙', b: 'un satellite de la Terre', f: ['une étoile', 'une planète', 'un soleil'] },
@@ -384,3 +384,15 @@ const NIVEAUX = {
     ]
   }
 };
+
+// Extensions : les fichiers cp-plus.js et cm1-plus.js ajoutent des jeux et des matières.
+function ajouterMatiere(niveau, matiere) { NIVEAUX[niveau].matieres.push(matiere); }
+function ajouterJeux(niveau, matiereId, jeux) {
+  const m = NIVEAUX[niveau].matieres.find(x => x.id === matiereId);
+  if (!m) throw new Error('Matière inconnue : ' + niveau + '/' + matiereId);
+  m.jeux.push(...jeux);
+}
+// Petit dessin SVG réutilisable (horloge, formes, angles…)
+function svg(contenu, taille = 160, vb = 100) {
+  return `<svg width="${taille}" height="${taille}" viewBox="0 0 ${vb} ${vb}" style="max-width:60vw;height:auto">${contenu}</svg>`;
+}

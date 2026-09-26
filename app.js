@@ -31,7 +31,7 @@ function parler(texte, lang = 'fr-FR', suite) {
 function lireQuestion(q, avecChoix) {
   if (!('speechSynthesis' in window)) return;
   speechSynthesis.cancel();
-  const choixLisibles = avecChoix && q.choix.every(c => /[a-zà-ÿ0-9]/i.test(c));
+  const choixLisibles = avecChoix && q.choix && q.choix.every(c => /[a-zà-ÿ0-9]/i.test(c));
   parler(q.dire || q.enonce, 'fr-FR', () => {
     if (q.direEn) parler(q.direEn, 'en-GB');
     else if (choixLisibles) parler(q.choix.join(', ou, '));
@@ -102,9 +102,10 @@ function partie(p, m, jeu) {
   function suivante() {
     if (n >= NB_QUESTIONS) return fin();
     let q, essais = 0;
-    do { q = jeu.gen(); } while (deja.has(q.enonce + q.visuel) && essais++ < 20);
-    deja.add(q.enonce + q.visuel);
-    let premierEssai = true;
+    do { q = jeu.gen(); } while (deja.has(cleQ(q)) && essais++ < 20);
+    deja.add(cleQ(q));
+    let premierEssai = true, erreurs = 0;
+    const zone = q.type === 'lettres' ? zoneLettres(q) : q.type === 'saisie' ? zoneSaisie() : `<div class="choix">${q.choix.map(c => `<button data-v="${echapper(c)}">${c}</button>`).join('')}</div>`;
     afficher(`${jeu.emoji} ${jeu.titre}`, `
       <div class="jeu">
         <div class="progression"><div style="width:${n / NB_QUESTIONS * 100}%"></div></div>
@@ -114,25 +115,64 @@ function partie(p, m, jeu) {
           ${q.aide ? `<div class="aide">${q.aide}</div>` : ''}
           ${('speechSynthesis' in window) ? '<button class="ecouter">🔊 Écouter</button>' : ''}
         </div>
-        <div class="choix">${q.choix.map(c => `<button data-v="${echapper(c)}">${c}</button>`).join('')}</div>
+        ${zone}
       </div>`, { retour: true, profil: p });
     const ec = $ecran.querySelector('.ecouter');
-    if (ec) ec.onclick = () => lireQuestion(q, true);
-    if (lecture || q.direEn) setTimeout(() => lireQuestion(q, false), 250);
-    $ecran.querySelectorAll('.choix button').forEach(b => b.onclick = () => {
-      if (b.dataset.v === q.bonne) {
-        b.classList.add('bon');
-        $ecran.querySelectorAll('.choix button').forEach(x => x.disabled = true);
-        if (premierEssai) reussies++;
-        son(true);
-        n++;
-        setTimeout(suivante, 900);
-      } else {
-        premierEssai = false;
-        b.classList.add('faux'); b.disabled = true;
-        son(false);
-      }
-    });
+    if (ec) ec.onclick = () => lireQuestion(q, !(lecture && m.id === 'francais'));
+    if (lecture || q.direEn || q.type === 'saisie') setTimeout(() => lireQuestion(q, false), 250);
+
+    function gagne() {
+      if (premierEssai) reussies++;
+      son(true);
+      n++;
+      setTimeout(suivante, 900);
+    }
+    function rate(el) {
+      premierEssai = false; erreurs++;
+      son(false);
+      if (el) { el.classList.remove('faux'); void el.offsetWidth; el.classList.add('faux'); }
+    }
+
+    if (q.type === 'lettres') {
+      const cible = [...q.bonne];
+      let pos = 0;
+      const cases = $ecran.querySelectorAll('.mot span');
+      $ecran.querySelectorAll('.tuiles button').forEach(b => b.onclick = () => {
+        if (b.dataset.l === cible[pos]) {
+          cases[pos].textContent = cible[pos]; cases[pos].classList.add('plein');
+          b.disabled = true; b.classList.add('utilise');
+          pos++;
+          if (pos === cible.length) { $ecran.querySelector('.mot').classList.add('bon'); gagne(); }
+        } else rate(b);
+      });
+    } else if (q.type === 'saisie') {
+      const champ = $ecran.querySelector('.saisie input');
+      const valider = () => {
+        if (!champ.value.trim()) return;
+        const ok = [q.bonne, ...(q.accepte || [])].some(r => normaliser(r) === normaliser(champ.value));
+        if (ok) { champ.classList.add('bon'); champ.disabled = true; gagne(); return; }
+        rate(champ);
+        if (erreurs >= 2) {
+          champ.disabled = true;
+          $ecran.querySelector('.saisie').innerHTML = `<div class="correction">La bonne réponse : <b>${echapper(q.bonne)}</b></div><button class="bouton">Continuer ➜</button>`;
+          $ecran.querySelector('.saisie .bouton').onclick = () => { n++; suivante(); };
+        } else champ.select();
+      };
+      $ecran.querySelector('.saisie .bouton').onclick = valider;
+      champ.onkeydown = e => { if (e.key === 'Enter') valider(); };
+      setTimeout(() => champ.focus(), 300);
+    } else {
+      $ecran.querySelectorAll('.choix button').forEach(b => b.onclick = () => {
+        if (b.dataset.v === q.bonne) {
+          b.classList.add('bon');
+          $ecran.querySelectorAll('.choix button').forEach(x => x.disabled = true);
+          gagne();
+        } else {
+          rate();
+          b.classList.add('faux'); b.disabled = true;
+        }
+      });
+    }
   }
 
   function fin() {
@@ -201,6 +241,16 @@ function nomJeu(niveau, cle) {
     if (j) return `${m.titre} · ${j.titre}`;
   }
   return cle;
+}
+function cleQ(q) { return (q.enonce || '') + (q.visuel || '') + (q.bonne || ''); }
+function normaliser(s) { return String(s).trim().toLowerCase().replace(/[’`]/g, "'").replace(/\s+/g, ' ').replace(/[\s.!?]+$/, ''); }
+function zoneLettres(q) {
+  const lettres = melange([...q.bonne]);
+  return `<div class="mot">${[...q.bonne].map(() => '<span></span>').join('')}</div>
+    <div class="tuiles">${lettres.map(l => `<button data-l="${echapper(l)}">${l}</button>`).join('')}</div>`;
+}
+function zoneSaisie() {
+  return `<div class="saisie"><input autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Écris ici"><button class="bouton">Valider</button></div>`;
 }
 function typo(s) { return s.replace(/ ([?!:»])/g, '\u00a0$1').replace(/« /g, '«\u00a0'); }
 function echapper(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
