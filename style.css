@@ -156,7 +156,7 @@ main { flex: 1; padding: 20px 16px 40px; max-width: 1000px; width: 100%; margin:
 
 /* ---------- Les maîtresses ---------- */
 .maitresse-svg { width: 100%; height: 100%; display: block; overflow: visible; }
-.perso-maitresse { width: clamp(120px, 22vw, 180px); aspect-ratio: 200 / 250; flex-shrink: 0; animation: respire 3s ease-in-out infinite; transform-origin: bottom center; }
+.perso-maitresse { width: clamp(150px, 26vw, 240px); aspect-ratio: 200 / 250; flex-shrink: 0; animation: respire 3s ease-in-out infinite; transform-origin: bottom center; }
 @keyframes respire { 50% { transform: scale(1.025) translateY(-2px); } }
 .bulle b { color: var(--orange); font-size: .85em; }
 body.parle .maitresse-svg .bouche { animation: parle .22s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center; }
@@ -172,9 +172,9 @@ body.parle .maitresse-svg .bouche { animation: parle .22s ease-in-out infinite a
 .bulle-prof.visible { opacity: 1; transform: scale(1); }
 .fin-maitresse { width: 150px; aspect-ratio: 200 / 250; margin: 0 auto -10px; }
 @media (max-width: 600px) {
-  .question.avec-maitresse { padding-left: 16px; padding-top: 70px; }
-  .prof-coin { width: 58px; top: 6px; bottom: auto; left: 8px; }
-  .bulle-prof { left: 64px; right: auto; bottom: auto; top: 10px; font-size: 16px; white-space: nowrap; }
-  .perso-maitresse { width: 100px; }
+  .question.avec-maitresse { padding-left: 16px; padding-top: 100px; }
+  .prof-coin { width: 80px; top: 6px; bottom: auto; left: 8px; }
+  .bulle-prof { left: 92px; right: auto; width: calc(100vw - 150px); bottom: auto; top: 20px; font-size: 16px; text-align: left; }
+  .perso-maitresse { width: 130px; }
   .mascotte { gap: 10px; }
 }

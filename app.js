@@ -131,7 +131,7 @@ function maison(p) {
   afficher(`${p.avatar} ${p.nom}`, `
     <div class="mascotte">
       <div class="perso-maitresse">${dessinMaitresse(p.maitresse, 'normal')}</div>
-      <div class="bulle"><b>${mt.nom}</b><br>${bulle}</div>
+      <div class="bulle"><b>${mt.nom}</b><br>${typo(bulle)}</div>
     </div>
     <div class="niveau">
       <b>Niveau ${niv}</b>
@@ -228,7 +228,7 @@ function partie(p, m, jeu) {
     function reagit(humeur, texte, dire) {
       const coin = $ecran.querySelector('.prof-coin');
       if (!coin) return;
-      coin.innerHTML = `${dessinMaitresse(p.maitresse, humeur)}<div class="bulle-prof visible">${texte}</div>`;
+      coin.innerHTML = `${dessinMaitresse(p.maitresse, humeur)}<div class="bulle-prof visible">${typo(texte)}</div>`;
       coin.classList.remove('saute'); void coin.offsetWidth; coin.classList.add('saute');
       if (dire) { taire(); parler(texte); }
     }
