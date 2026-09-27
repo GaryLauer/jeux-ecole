@@ -167,7 +167,7 @@ const HISTOIRES = [
 function e(a) { return a.fille ? 'e' : ''; }
 function nouvelAnimal(p, nom, fille) {
   return {
-    espece: p.niveau === 'CP' ? 'panda' : 'panthere', nom, fille, ne: Date.now(), xp: 0,
+    espece: p.espece || (p.niveau === 'CP' ? 'panda' : 'panthere'), nom, fille, ne: Date.now(), xp: 0,
     ventre: 70, eau: 70, proprete: 85, energie: 80, bonheur: 80, sante: 100,
     malade: false, dort: false, cacas: 0, couche: false, prochainCaca: 0, pansement: 0, brille: 0,
     maj: Date.now(), rythme: 20, tenue: {}, sac: { 'biberon-lait': 2, 'biberon-eau': 1, couches: 1 }, possede: {}, decor: 'chambre', vuStade: 'bebe'
@@ -801,7 +801,7 @@ function ceremonieGrandir(p) {
 
 /* ---------- Adoption ---------- */
 function adoption(p) {
-  const espece = p.niveau === 'CP' ? 'panda' : 'panthere';
+  const espece = p.espece || (p.niveau === 'CP' ? 'panda' : 'panthere');
   const nomEspece = espece === 'panda' ? 'bébé panda' : 'bébé panthère';
   const temp = { espece, xp: 0, proprete: 100, cacas: 0, tenue: {}, nom: '' };
   let fille = null;

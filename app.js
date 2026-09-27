@@ -22,12 +22,20 @@ const ALBUM = [
 const CHANCES = { commun: 0.75, rare: 0.21, 'légendaire': 0.04 };
 
 function nouveauProfil(id, nom, niveau, avatar) {
-  return { id, nom, niveau, avatar, maitresse: niveau === 'CP' ? 'panda' : 'leopard', etoiles: 0, scores: {}, pieces: 0, tickets: 1, xp: 0, album: {}, records: {}, serie: { jour: '', n: 0 }, defi: '', jeuxDuJour: { jour: '', n: 0 }, pattes: 0, animal: null };
+  // niveau : la classe choisie pour jouer ; classeReelle : sa vraie classe à l'école (réglée par les parents).
+  return { id, nom, niveau, classeReelle: niveau, espece: niveau === 'CP' ? 'panda' : 'panthere', avatar, maitresse: niveau === 'CP' ? 'panda' : 'leopard', etoiles: 0, scores: {}, pieces: 0, tickets: 1, xp: 0, album: {}, records: {}, serie: { jour: '', n: 0 }, defi: '', jeuxDuJour: { jour: '', n: 0 }, pattes: 0, animal: null };
 }
 function charger() {
   let d;
   try { d = JSON.parse(localStorage.getItem(CLE)); } catch (e) {}
   if (!d || !d.profils) d = { profils: [nouveauProfil('p1', 'Ma grande', 'CM1', '🦊'), nouveauProfil('p2', 'Ma petite', 'CP', '🐻')] };
+  d.profils.forEach(p => {
+    // L'animal reste celui de l'enfant, quelle que soit la classe choisie ensuite.
+    if (!p.espece) p.espece = p.animal ? p.animal.espece : p.niveau === 'CP' ? 'panda' : 'panthere';
+    if (!p.classeReelle) p.classeReelle = p.niveau;
+    // Étoiles rangées par classe (« CM1:maths/tables ») : chaque classe a ses propres jeux.
+    if (p.scores) Object.keys(p.scores).forEach(k => { if (!k.includes(':')) { p.scores[`${p.niveau}:${k}`] = p.scores[k]; delete p.scores[k]; } });
+  });
   // Ajoute les champs des nouvelles versions aux anciens profils.
   d.profils = d.profils.map(p => ({ ...nouveauProfil(p.id, p.nom, p.niveau, p.avatar), ...p }));
   d.profils.forEach(p => { if (p.nom === 'Mon grand') p.nom = 'Ma grande'; if (p.nom === 'Mon petit') p.nom = 'Ma petite'; });
@@ -43,6 +51,14 @@ function infoNiveau(xp) {
   return { niv, pourcent: Math.round(xp / besoin * 100) };
 }
 function niveauDe(p) { return infoNiveau(p.xp).niv; }
+
+/* ---------- Classes ---------- */
+const COULEUR_CLASSE = { CP: '#ff8a3d', CE1: '#e5484d', CE2: '#3bb273', CM1: '#4f8ef7', CM2: '#8e5cd9' };
+const rangClasse = c => Math.max(0, CLASSES.indexOf(c));
+// On peut « redoubler » une classe (un an en dessous) et gagner ses points ;
+// deux ans ou plus en dessous de sa vraie classe, on peut jouer mais on ne gagne rien.
+function sansPoints(p, classe = p.niveau) { return rangClasse(p.classeReelle) - rangClasse(classe) >= 2; }
+function cleScore(p, m, j) { return `${p.niveau}:${m.id}/${j.id}`; }
 
 /* ---------- Voix ---------- */
 function parler(texte, lang = 'fr-FR', suite) {
@@ -106,7 +122,7 @@ function accueil() {
     <p class="sous-titre">Qui joue aujourd'hui ?</p>
     <div class="grille">
       ${donnees.profils.map((p, i) => `
-        <button class="tuile profil" style="--c:${p.niveau === 'CP' ? '#ff8a3d' : '#4f8ef7'}" data-i="${i}">
+        <button class="tuile profil" style="--c:${COULEUR_CLASSE[p.niveau] || '#4f8ef7'}" data-i="${i}">
           <span class="emoji rebond">${p.avatar}</span>${echapper(p.nom)}<small>${p.niveau} · Niveau ${niveauDe(p)} · 🪙 ${p.pieces}</small>
         </button>`).join('')}
     </div>
@@ -131,7 +147,7 @@ function maison(p) {
   maitresseActive = p.maitresse;
   const mt = MAITRESSES[p.maitresse];
   const alerte = alerteAnimal(p);
-  const nomAnimal = p.animal ? p.animal.nom : (p.niveau === 'CP' ? 'ton bébé panda' : 'ton bébé panthère');
+  const panda = p.espece === 'panda';
   const bulle = alerte && !p.animal.dort ? `${p.animal.nom} t'appelle : « ${alerte.replace(/\s*\p{Extended_Pictographic}\uFE0F?/gu, '')} »` : !p.animal && Math.random() < 0.5 ? `Un bébé t'attend dans la maison des animaux ! Va vite l'adopter.` : pioche([
     pioche(mt.salut),
     `Coucou ${echapper(p.nom)} ! C'est moi, ${mt.nom}.`,
@@ -154,7 +170,7 @@ function maison(p) {
       <button class="tuile ${defiFait ? 'fait' : 'brille'}" style="--c:#e5484d" data-porte="defi"><span class="emoji">🎯</span>Défi du jour<small>${defiFait ? 'Réussi ! Reviens demain' : '+2 🎟️ et +20 🪙'}</small></button>
       <button class="tuile" style="--c:#8e5cd9" data-porte="salle"><span class="emoji">🎮</span>Salle de jeux<small>${p.tickets} 🎟️</small></button>
       <button class="tuile" style="--c:#1fa5a5" data-porte="album"><span class="emoji">📒</span>Mon album<small>${nbAlbum} / ${ALBUM.length}</small></button>
-      <button class="tuile ${alerte || !p.animal ? 'brille' : ''}" style="--c:${p.niveau === 'CP' ? '#3a3a48' : '#233270'}" data-porte="animal"><span class="emoji">${p.niveau === 'CP' ? '🐼' : '🐆'}</span>${p.animal ? echapper(p.animal.nom) : p.niveau === 'CP' ? 'Mon panda' : 'Ma panthère'}<small>${!p.animal ? 'Viens l\'adopter !' : alerte && !p.animal.dort ? '📢 ' + echapper(alerte) : p.animal.dort ? 'Zzz… il dort' : '🐾 ' + (p.pattes || 0) + ' pattes'}</small></button>
+      <button class="tuile ${alerte || !p.animal ? 'brille' : ''}" style="--c:${panda ? '#3a3a48' : '#233270'}" data-porte="animal"><span class="emoji">${panda ? '🐼' : '🐆'}</span>${p.animal ? echapper(p.animal.nom) : panda ? 'Mon panda' : 'Ma panthère'}<small>${!p.animal ? 'Viens l\'adopter !' : alerte && !p.animal.dort ? '📢 ' + echapper(alerte) : p.animal.dort ? 'Zzz… il dort' : '🐾 ' + (p.pattes || 0) + ' pattes'}</small></button>
     </div>`, { retour: true, profil: p });
   parler(bulle);
   $ecran.querySelectorAll('[data-porte]').forEach(b => b.onclick = () => {
@@ -170,13 +186,28 @@ function maison(p) {
 function matieres(p) {
   const niv = NIVEAUX[p.niveau];
   afficher('📚 Apprendre', `
+    <div class="choix-classe">
+      <span>Ma classe :</span>
+      ${CLASSES.map(c => `<button class="${c === p.niveau ? 'choisie' : ''} ${sansPoints(p, c) ? 'sans-points' : ''}" style="--c:${COULEUR_CLASSE[c]}" data-classe="${c}">${c}</button>`).join('')}
+    </div>
+    ${sansPoints(p) ? `<p class="astuce alerte-classe">⚠️ Tu es en ${p.classeReelle} : en ${p.niveau}, tu peux t'entraîner mais tu ne gagnes <b>aucun point</b> (ni pièces, ni pattes, ni étoiles).</p>` : ''}
     <p class="sous-titre">Choisis une matière</p>
     <div class="grille">
       ${niv.matieres.map((m, i) => {
-        const total = m.jeux.length * 3, gagnees = m.jeux.reduce((a, j) => a + (p.scores[`${m.id}/${j.id}`] || 0), 0);
+        const total = m.jeux.length * 3, gagnees = m.jeux.reduce((a, j) => a + (p.scores[cleScore(p, m, j)] || 0), 0);
         return `<button class="tuile" style="--c:${m.couleur}" data-i="${i}"><span class="emoji">${m.emoji}</span>${m.titre}<small>⭐ ${gagnees} / ${total}</small></button>`;
       }).join('')}
     </div>`, { retour: true, profil: p });
+  $ecran.querySelectorAll('[data-classe]').forEach(b => b.onclick = () => {
+    const c = b.dataset.classe;
+    if (c === p.niveau) return;
+    son('tic');
+    p.niveau = c; sauver();
+    matieres(p);
+    const ecart = rangClasse(p.classeReelle) - rangClasse(c);
+    parler(sansPoints(p) ? `Attention ! En ${c}, tu peux t'entraîner, mais tu ne gagnes aucun point. C'est trop loin de ta classe.`
+      : ecart === 1 ? `Tu révises le ${c}. Tu gagnes tes points normalement !` : `C'est parti pour le ${c} !`);
+  });
   $ecran.querySelectorAll('.tuile').forEach(b => b.onclick = () => {
     const m = niv.matieres[b.dataset.i];
     if (niv.lecture) parler(m.titre);
@@ -189,8 +220,8 @@ function listeJeux(p, m) {
     <p class="sous-titre">Choisis un jeu</p>
     <div class="grille">
       ${m.jeux.map((j, i) => {
-        const best = p.scores[`${m.id}/${j.id}`] || 0;
-        const verrou = m.progressif && i > 0 && !(p.scores[`${m.id}/${m.jeux[i - 1].id}`] >= 1);
+        const best = p.scores[cleScore(p, m, j)] || 0;
+        const verrou = m.progressif && i > 0 && !(p.scores[cleScore(p, m, m.jeux[i - 1])] >= 1);
         return verrou
           ? `<button class="tuile verrou" data-i="${i}" data-bloque="1"><span class="emoji">🔒</span>${j.titre}<small>Finis la leçon d'avant</small></button>`
           : `<button class="tuile" style="--c:${m.couleur}" data-i="${i}"><span class="emoji">${j.emoji}</span>${j.titre}<small>${'⭐'.repeat(best) + '☆'.repeat(3 - best)}</small></button>`;
@@ -421,35 +452,40 @@ function partie(p, m, jeu) {
   function fin() {
     const sur10 = reussies * 10 / NOTEES;
     const nbEt = sur10 >= 9 ? 3 : sur10 >= 6 ? 2 : sur10 >= 3 ? 1 : 0;
-    const avantNiveau = niveauDe(p), avantEtoiles = m ? (p.scores[`${m.id}/${jeu.id}`] || 0) : 0;
-    let pieces = reussies + (nbEt === 3 ? 5 : 0) + (meilleurCombo >= 5 ? 3 : 0);
-    let tickets = nbEt >= 2 ? 1 : 0;
-    if (jeu.defi && nbEt >= 1) { pieces += 20; tickets += 2; p.defi = aujourdhui(); }
-    if (m) {
-      const cle = `${m.id}/${jeu.id}`;
-      if (nbEt > avantEtoiles) pieces += (nbEt - avantEtoiles) * 2; // bonus la première fois qu'on gagne une étoile
-      p.scores[cle] = Math.max(avantEtoiles, nbEt);
+    const avantNiveau = niveauDe(p), avantEtoiles = m ? (p.scores[cleScore(p, m, jeu)] || 0) : 0;
+    // Classe choisie trop basse (2 ans ou plus sous la vraie classe) : rien n'est gagné ni enregistré.
+    const bloque = sansPoints(p);
+    let pieces = 0, tickets = 0, pattes = 0;
+    if (!bloque) {
+      pieces = reussies + (nbEt === 3 ? 5 : 0) + (meilleurCombo >= 5 ? 3 : 0);
+      tickets = nbEt >= 2 ? 1 : 0;
+      if (jeu.defi && nbEt >= 1) { pieces += 20; tickets += 2; p.defi = aujourdhui(); }
+      if (m) {
+        if (nbEt > avantEtoiles) pieces += (nbEt - avantEtoiles) * 2; // bonus la première fois qu'on gagne une étoile
+        p.scores[cleScore(p, m, jeu)] = Math.max(avantEtoiles, nbEt);
+      }
+      p.etoiles += nbEt; p.pieces += pieces; p.tickets += tickets;
+      pattes = gagnerPattes(p, reussies, nbEt, jeu.defi);
+      p.xp += reussies * 10;
     }
-    p.etoiles += nbEt; p.pieces += pieces; p.tickets += tickets;
-    const pattes = gagnerPattes(p, reussies, nbEt, jeu.defi);
-    p.xp += reussies * 10;
     const monte = niveauDe(p) > avantNiveau;
     if (monte) p.tickets += 1;
     sauver();
-    const msg = jeu.defi && nbEt === 0 ? 'Presque ! Il faut 3 bonnes réponses pour réussir le défi.' : nbEt === 3 ? 'Bravo, c\'est parfait !' : nbEt === 2 ? 'Très bien joué !' : nbEt === 1 ? 'C\'est bien, continue !' : 'On réessaie ensemble ?';
+    const msg = bloque ? `Bien entraîné ! Mais en ${p.niveau}, c'est trop loin de ta classe : tu ne gagnes pas de points.` : jeu.defi && nbEt === 0 ? 'Presque ! Il faut 3 bonnes réponses pour réussir le défi.' : nbEt === 3 ? 'Bravo, c\'est parfait !' : nbEt === 2 ? 'Très bien joué !' : nbEt === 1 ? 'C\'est bien, continue !' : 'On réessaie ensemble ?';
     afficher(`${jeu.emoji} ${jeu.titre}`, `
       <div class="bravo">
         <div class="fin-maitresse">${dessinMaitresse(p.maitresse, nbEt ? 'contente' : 'encourage')}</div>
         <div class="gros">${nbEt ? [1, 2, 3].map(i => `<span class="etoile ${i <= nbEt ? 'pleine' : ''}" style="animation-delay:${i * .25}s">⭐</span>`).join('') : '💪'}</div>
         <p>${msg}<br><small>${reussies} bonnes réponses du premier coup sur ${NOTEES}${meilleurCombo >= 3 ? ` · meilleure série 🔥 ${meilleurCombo}` : ''}</small></p>
-        <div class="gains">
+        ${bloque ? `<p class="astuce alerte-classe">Tu es en ${p.classeReelle} : en ${p.niveau}, aucun point n'est gagné. Choisis ta classe ou celle juste en dessous pour gagner des pièces, des pattes et des étoiles !</p>` : ''}
+        <div class="gains" ${bloque ? 'style="display:none"' : ''}>
           <div class="gain">🪙 <b>+${pieces}</b></div>
           ${pattes ? `<div class="gain">🐾 <b>+${pattes}</b></div>` : ''}
           ${tickets ? `<div class="gain">🎟️ <b>+${tickets}</b></div>` : ''}
           ${monte ? `<div class="gain niveau-up">🆙 Niveau ${niveauDe(p)} ! <b>+1 🎟️</b></div>` : ''}
         </div>
-        ${p.animal && reussies ? `<p class="astuce">${p.animal.espece === 'panda' ? '🐼' : '🐆'} ${echapper(p.animal.nom)} grandit : +${reussies * 10} XP</p>` : ''}
-        ${!tickets && !jeu.defi ? '<p class="astuce">Avec 2 étoiles ⭐⭐, tu gagnes un ticket 🎟️ pour la salle de jeux !</p>' : ''}
+        ${p.animal && reussies && !bloque ? `<p class="astuce">${p.animal.espece === 'panda' ? '🐼' : '🐆'} ${echapper(p.animal.nom)} grandit : +${reussies * 10} XP</p>` : ''}
+        ${!tickets && !jeu.defi && !bloque ? '<p class="astuce">Avec 2 étoiles ⭐⭐, tu gagnes un ticket 🎟️ pour la salle de jeux !</p>' : ''}
         <div>
           ${jeu.defi ? '' : '<button class="bouton" id="rejouer">🔁 Rejouer</button>'}
           ${p.tickets ? '<button class="bouton violet" id="salle">🎮 Salle de jeux</button>' : ''}
@@ -625,14 +661,18 @@ function reglages() {
       <select id="limite" style="font-size:22px;padding:8px;border-radius:12px">
         ${[3, 5, 10, 20, 0].map(v => `<option value="${v}" ${v === donnees.limiteMiniJeux ? 'selected' : ''}>${v || 'Sans limite'}</option>`).join('')}
       </select>
-      <p style="font-size:16px;color:#7a7066">Les tickets 🎟️ se gagnent seulement en réussissant les exercices (2 étoiles ou plus, défi du jour, nouveau niveau).<br>Les pattes 🐾 de la boutique de l'animal se gagnent seulement avec les exercices (2 par bonne réponse, 3 par étoile, 10 pour le défi).</p>
+      <p style="font-size:16px;color:#7a7066">Les tickets 🎟️ se gagnent seulement en réussissant les exercices (2 étoiles ou plus, défi du jour, nouveau niveau).<br>Les pattes 🐾 de la boutique de l'animal se gagnent seulement avec les exercices (2 par bonne réponse, 3 par étoile, 10 pour le défi).<br>Classes : l'enfant peut jouer dans n'importe quelle classe. Dans sa vraie classe, au-dessus, ou une classe en dessous, il gagne ses points normalement ; deux classes ou plus en dessous, il ne gagne rien.</p>
       <hr style="margin:30px 0">
       ${donnees.profils.map((p, i) => `
         <h2>${p.avatar} Profil ${i + 1} · Niveau ${niveauDe(p)} · 🪙 ${p.pieces} · 🎟️ ${p.tickets} · 🐾 ${p.pattes || 0}</h2>
         <label>Prénom</label><input data-i="${i}" data-k="nom" value="${echapper(p.nom)}">
-        <label>Classe</label>
+        <label>Vraie classe à l'école</label>
+        <select data-i="${i}" data-k="classeReelle" style="font-size:22px;padding:8px;border-radius:12px">
+          ${CLASSES.map(n => `<option ${n === p.classeReelle ? 'selected' : ''}>${n}</option>`).join('')}
+        </select>
+        <label>Classe choisie pour jouer (l'enfant peut aussi la changer dans « Apprendre »)</label>
         <select data-i="${i}" data-k="niveau" style="font-size:22px;padding:8px;border-radius:12px">
-          ${Object.keys(NIVEAUX).map(n => `<option ${n === p.niveau ? 'selected' : ''}>${n}</option>`).join('')}
+          ${CLASSES.map(n => `<option value="${n}" ${n === p.niveau ? 'selected' : ''}>${n}${sansPoints(p, n) ? ' (sans points)' : ''}</option>`).join('')}
         </select>
         <label>Maîtresse</label>
         <select data-i="${i}" data-k="maitresse" style="font-size:22px;padding:8px;border-radius:12px">
@@ -641,21 +681,22 @@ function reglages() {
         <label>Avatar</label>
         <div>${AVATARS.map(av => `<button class="rond" style="margin:4px;${av === p.avatar ? 'outline:4px solid #ff8a3d' : ''}" data-i="${i}" data-av="${av}">${av}</button>`).join('')}</div>
         <table><tr><th>Jeu</th><th>Meilleur score</th></tr>
-          ${Object.entries(p.scores).map(([k, s]) => `<tr><td>${nomJeu(p.niveau, k)}</td><td>${'⭐'.repeat(s) || '–'}</td></tr>`).join('') || '<tr><td colspan="2">Pas encore de partie jouée.</td></tr>'}
+          ${Object.entries(p.scores).map(([k, s]) => `<tr><td>${nomJeu(k)}</td><td>${'⭐'.repeat(s) || '–'}</td></tr>`).join('') || '<tr><td colspan="2">Pas encore de partie jouée.</td></tr>'}
         </table>`).join('<hr style="margin:30px 0">')}
       <p style="text-align:center;margin-top:30px"><button class="bouton" id="fini">✔ Terminé</button></p>
     </div>`, { retour: true });
   document.getElementById('limite').onchange = e => { donnees.limiteMiniJeux = parseInt(e.target.value, 10); sauver(); };
-  $ecran.querySelectorAll('input[data-i],select[data-i]').forEach(el => el.onchange = () => { donnees.profils[el.dataset.i][el.dataset.k] = el.value.trim() || donnees.profils[el.dataset.i][el.dataset.k]; sauver(); });
+  $ecran.querySelectorAll('input[data-i],select[data-i]').forEach(el => el.onchange = () => { donnees.profils[el.dataset.i][el.dataset.k] = el.value.trim() || donnees.profils[el.dataset.i][el.dataset.k]; sauver(); if (el.dataset.k === 'classeReelle') reglages(); });
   $ecran.querySelectorAll('[data-av]').forEach(b => b.onclick = () => { donnees.profils[b.dataset.i].avatar = b.dataset.av; sauver(); reglages(); });
   document.getElementById('fini').onclick = accueil;
 }
 
-function nomJeu(niveau, cle) {
-  const [mid, jid] = cle.split('/');
-  for (const n of Object.values(NIVEAUX)) {
+function nomJeu(cle) {
+  const [niv, reste] = cle.includes(':') ? cle.split(':') : ['', cle];
+  const [mid, jid] = reste.split('/');
+  for (const n of niv && NIVEAUX[niv] ? [NIVEAUX[niv]] : Object.values(NIVEAUX)) {
     const m = n.matieres.find(x => x.id === mid); const j = m && m.jeux.find(x => x.id === jid);
-    if (j) return `${m.titre} · ${j.titre}`;
+    if (j) return `${niv ? niv + ' · ' : ''}${m.titre} · ${j.titre}`;
   }
   return cle;
 }

@@ -66,15 +66,16 @@
         { type: 'parler', visuel: img, enonce: en, sens: fr, bonne: en, accepte: acc, dire: 'À toi ! Répète après moi :', direEn: en }
       ]);
       // Puis un petit jeu, uniquement avec les mots qu'on vient d'apprendre.
-      const nbChoix = niveau === 'CP' ? 3 : 4;
+      const petit = niveau === 'CP' || niveau === 'CE1';
+      const nbChoix = petit ? 3 : 4;
       const quiz = melange(mots).map(([en, img, fr], i) => {
         const autres = melange(mots.filter(m => m[0] !== en)).slice(0, nbChoix - 1);
-        if (niveau === 'CP' || i < 3) {
+        if (petit || i < 3) {
           // Écoute le mot anglais et touche la bonne image.
           return { visuel: '🔊', enonce: 'Écoute et touche la bonne image', dire: 'Écoute, et touche la bonne image :', direEn: en, indice: true,
             choix: melange([img, ...autres.map(m => m[1])]), bonne: img };
         }
-        // CM1 : lis le mot français et choisis le mot anglais.
+        // À partir du CE2 : lis le mot français et choisis le mot anglais.
         return { visuel: estImageEmoji(img) ? img : '🇬🇧', enonce: `Comment dit-on « ${fr} » en anglais ?`, indice: true, choix: melange([en, ...autres.map(m => m[0])]), bonne: en };
       });
       return [...apprendre, ...quiz];
@@ -83,6 +84,13 @@
 
   ajouterMatiere('CP', { id: 'cours-anglais', titre: 'Cours d\'anglais', emoji: '🎓', couleur: '#2f6fd6', progressif: true,
     jeux: LECONS.map((l, i) => lecon(l, 'CP', i)) });
+  // Le CE1 reprend les leçons du CP, le CE2 y ajoute la moitié de celles du CM1, le CM2 les a toutes.
+  ajouterMatiere('CE1', { id: 'cours-anglais', titre: 'Cours d\'anglais', emoji: '🎓', couleur: '#2f6fd6', progressif: true,
+    jeux: LECONS.map((l, i) => lecon(l, 'CE1', i)) });
+  ajouterMatiere('CE2', { id: 'cours-anglais', titre: 'Cours d\'anglais', emoji: '🎓', couleur: '#2f6fd6', progressif: true,
+    jeux: [...LECONS, ...LECONS_CM1.slice(0, Math.ceil(LECONS_CM1.length / 2))].map((l, i) => lecon(l, 'CE2', i)) });
   ajouterMatiere('CM1', { id: 'cours-anglais', titre: 'Cours d\'anglais', emoji: '🎓', couleur: '#2f6fd6', progressif: true,
     jeux: [...LECONS, ...LECONS_CM1].map((l, i) => lecon(l, 'CM1', i)) });
+  ajouterMatiere('CM2', { id: 'cours-anglais', titre: 'Cours d\'anglais', emoji: '🎓', couleur: '#2f6fd6', progressif: true,
+    jeux: [...LECONS, ...LECONS_CM1].map((l, i) => lecon(l, 'CM2', i)) });
 })();

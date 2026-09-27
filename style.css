@@ -406,3 +406,11 @@ body.parle .maitresse-svg .bouche { animation: parle .22s ease-in-out infinite a
   .cours-boite { font-size: 18px; padding: 14px; }
   .fiche h3 { font-size: 20px; }
 }
+
+/* Choix de la classe (écran Apprendre) */
+.choix-classe { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin: 4px 0 6px; font-size: clamp(18px, 3vw, 22px); font-weight: bold; }
+.choix-classe button { font: inherit; min-width: 64px; padding: 8px 12px; border-radius: 16px; border: 3px solid var(--c); background: #fff; color: var(--c); cursor: pointer; }
+.choix-classe button.choisie { background: var(--c); color: #fff; transform: scale(1.08); box-shadow: 0 4px 0 rgba(0, 0, 0, .15); }
+.choix-classe button.sans-points { opacity: .5; border-style: dashed; }
+.choix-classe button.sans-points.choisie { opacity: 1; }
+.alerte-classe { font-size: 18px; background: #fff4d6; border-radius: 14px; padding: 10px 14px; color: #8a5a00; max-width: 640px; margin: 8px auto; }

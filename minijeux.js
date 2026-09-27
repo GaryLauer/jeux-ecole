@@ -31,7 +31,7 @@ const MINIJEUX = (function () {
      ================================================================ */
   function moteur(conteneur, options, fini, def) {
     options = options || {};
-    const cp = options.niveau !== 'CM1';
+    const cp = options.niveau === 'CP' || options.niveau === 'CE1';
     const duree = options.duree > 0 ? options.duree : def.duree;
     const son = t => { try { if (typeof options.son === 'function') options.son(t); } catch (e) { /* son facultatif */ } };
 

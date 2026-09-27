@@ -307,6 +307,9 @@ const NIVEAUX = {
       }
     ]
   },
+  // CE1, CE2 et CM2 : leurs matières sont ajoutées par ce1.js, ce2.js et cm2.js.
+  CE1: { nom: 'CE1', lecture: true, matieres: [] },
+  CE2: { nom: 'CE2', lecture: false, matieres: [] },
   CM1: {
     nom: 'CM1', lecture: false, matieres: [
       {
@@ -384,6 +387,9 @@ const NIVEAUX = {
     ]
   }
 };
+NIVEAUX.CM2 = { nom: 'CM2', lecture: false, matieres: [] };
+// Les classes dans l'ordre de l'école.
+const CLASSES = ['CP', 'CE1', 'CE2', 'CM1', 'CM2'];
 
 // Extensions : les fichiers cp-plus.js et cm1-plus.js ajoutent des jeux et des matières.
 function ajouterMatiere(niveau, matiere) { NIVEAUX[niveau].matieres.push(matiere); }
