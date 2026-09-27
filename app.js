@@ -58,7 +58,7 @@ const rangClasse = c => Math.max(0, CLASSES.indexOf(c));
 // On peut « redoubler » une classe (un an en dessous) et gagner ses points ;
 // deux ans ou plus en dessous de sa vraie classe, on peut jouer mais on ne gagne rien.
 function sansPoints(p, classe = p.niveau) { return rangClasse(p.classeReelle) - rangClasse(classe) >= 2; }
-function cleScore(p, m, j) { return `${p.niveau}:${m.id}/${j.id}`; }
+function cleScore(p, m, j) { return m.parcours ? PARCOURS_EN.cle(j.id) : `${p.niveau}:${m.id}/${j.id}`; }
 
 /* ---------- Voix ---------- */
 function parler(texte, lang = 'fr-FR', suite) {
@@ -190,12 +190,13 @@ function matieres(p) {
       <span>Ma classe :</span>
       ${CLASSES.map(c => `<button class="${c === p.niveau ? 'choisie' : ''} ${sansPoints(p, c) ? 'sans-points' : ''}" style="--c:${COULEUR_CLASSE[c]}" data-classe="${c}">${c}</button>`).join('')}
     </div>
-    ${sansPoints(p) ? `<p class="astuce alerte-classe">⚠️ Tu es en ${p.classeReelle} : en ${p.niveau}, tu peux t'entraîner mais tu ne gagnes <b>aucun point</b> (ni pièces, ni pattes, ni étoiles).</p>` : ''}
+    ${sansPoints(p) ? `<p class="astuce alerte-classe">⚠️ Tu es en ${p.classeReelle} : en ${p.niveau}, tu peux t'entraîner mais tu ne gagnes <b>aucun point</b> (ni pièces, ni pattes, ni étoiles), sauf en anglais.</p>` : ''}
     <p class="sous-titre">Choisis une matière</p>
     <div class="grille">
       ${niv.matieres.map((m, i) => {
         const total = m.jeux.length * 3, gagnees = m.jeux.reduce((a, j) => a + (p.scores[cleScore(p, m, j)] || 0), 0);
-        return `<button class="tuile" style="--c:${m.couleur}" data-i="${i}"><span class="emoji">${m.emoji}</span>${m.titre}<small>⭐ ${gagnees} / ${total}</small></button>`;
+        const info = m.parcours ? `Palier ${palierActuel(p).num}` : `⭐ ${gagnees} / ${total}`;
+        return `<button class="tuile" style="--c:${m.couleur}" data-i="${i}"><span class="emoji">${m.emoji}</span>${m.titre}<small>${info}</small></button>`;
       }).join('')}
     </div>`, { retour: true, profil: p });
   $ecran.querySelectorAll('[data-classe]').forEach(b => b.onclick = () => {
@@ -216,6 +217,7 @@ function matieres(p) {
 }
 
 function listeJeux(p, m) {
+  if (m.parcours) return listeParcours(p, m);
   afficher(`${m.emoji} ${m.titre}`, `
     <p class="sous-titre">Choisis un jeu</p>
     <div class="grille">
@@ -233,10 +235,44 @@ function listeJeux(p, m) {
   });
 }
 
+// Le parcours d'anglais : des paliers de leçons, chacun fermé par une évaluation qui ouvre le suivant.
+function palierActuel(p) {
+  const P = PARCOURS_EN;
+  return P.paliers.find(pal => !P.reussi(p, pal)) || P.paliers[P.paliers.length - 1];
+}
+function listeParcours(p, m) {
+  const P = PARCOURS_EN, actuel = palierActuel(p);
+  const tuile = j => {
+    const best = p.scores[P.cle(j.id)] || 0, ok = j.evaluation && P.reussi(p, P.paliers[j.palier - 1]);
+    if (!P.ouvert(p, j)) return `<button class="tuile verrou" data-id="${j.id}" data-bloque="1"><span class="emoji">🔒</span>${j.titre}<small>${j.evaluation ? 'Finis les leçons' : j === P.paliers[j.palier - 1].lecons[0] ? 'Réussis l\'évaluation d\'avant' : 'Finis la leçon d\'avant'}</small></button>`;
+    const bas = j.evaluation ? (ok ? '✅ Réussie' : `${Math.round(P.seuil * 10)} sur 10 pour passer`) : '⭐'.repeat(best) + '☆'.repeat(3 - best);
+    return `<button class="tuile ${j.evaluation && !ok ? 'brille' : ''}" style="--c:${j.evaluation ? '#e5484d' : m.couleur}" data-id="${j.id}"><span class="emoji">${j.emoji}</span>${j.titre}<small>${bas}</small></button>`;
+  };
+  let html = '', niveau = '';
+  for (const pal of P.paliers) {
+    if (pal.num > actuel.num + 1) break;  // on montre les paliers faits, l'actuel et le suivant (fermé)
+    if (pal.niveau !== niveau) { niveau = pal.niveau; html += `<h2 class="niveau-en">${pal.niveauEmoji} Niveau ${niveau}</h2>`; }
+    html += `<p class="sous-titre palier-en">${P.reussi(p, pal) ? '✅' : pal.emoji} Palier ${pal.num} : ${pal.titre}</p>
+      <div class="grille">${[...pal.lecons, pal.evaluation].map(tuile).join('')}</div>`;
+  }
+  const reste = P.paliers.length - Math.min(P.paliers.length, actuel.num + 1);
+  html += `<p class="astuce">${reste ? `Encore ${reste} palier${reste > 1 ? 's' : ''} après ceux-là, puis ` : 'Ensuite : '}${P.aVenir.map(([n, e]) => `${e} ${n}`).join(' · ')} (bientôt).</p>`;
+  afficher(`${m.emoji} ${m.titre}`, `<p class="sous-titre">Réussis l'évaluation d'un palier pour ouvrir le suivant !</p>${html}`, { retour: true, profil: p });
+  const parId = id => m.jeux.find(j => j.id === id);
+  $ecran.querySelectorAll('.tuile').forEach(b => b.onclick = () => {
+    const j = parId(b.dataset.id);
+    if (b.dataset.bloque) { son('faux'); b.classList.remove('faux'); void b.offsetWidth; b.classList.add('faux'); parler(j.evaluation ? 'Finis d\'abord toutes les leçons du palier !' : j === P.paliers[j.palier - 1].lecons[0] ? 'Réussis d\'abord l\'évaluation du palier d\'avant !' : 'Termine d\'abord la leçon d\'avant !'); return; }
+    aller(() => partie(p, m, j));
+  });
+}
+
 // Le défi du jour : 10 questions tirées de toutes les matières de l'enfant.
 function jeuDefi(p) {
   const tous = [];
   NIVEAUX[p.niveau].matieres.filter(m => !m.progressif).forEach(m => m.jeux.forEach(j => tous.push({ m, j })));
+  // Anglais : seulement des mots déjà appris dans les leçons faites.
+  const rev = typeof PARCOURS_EN !== 'undefined' && PARCOURS_EN.revision(p);
+  if (rev) tous.push({ m: PARCOURS_EN.matiere, j: rev }, { m: PARCOURS_EN.matiere, j: rev });
   return { id: 'defi', titre: 'Défi du jour', emoji: '🎯', defi: true, gen: () => { const x = pioche(tous); const q = x.j.gen(); q.matiere = x.m; q.jeu = x.j; return q; } };
 }
 
@@ -454,7 +490,9 @@ function partie(p, m, jeu) {
     const nbEt = sur10 >= 9 ? 3 : sur10 >= 6 ? 2 : sur10 >= 3 ? 1 : 0;
     const avantNiveau = niveauDe(p), avantEtoiles = m ? (p.scores[cleScore(p, m, jeu)] || 0) : 0;
     // Classe choisie trop basse (2 ans ou plus sous la vraie classe) : rien n'est gagné ni enregistré.
-    const bloque = sansPoints(p);
+    const bloque = sansPoints(p) && !(m && m.parcours); // le parcours d'anglais ne dépend pas de la classe
+    // Évaluation d'anglais : 8 sur 10 pour réussir le palier et ouvrir le suivant.
+    const evalOk = jeu.evaluation && reussies >= Math.ceil(PARCOURS_EN.seuil * NOTEES);
     let pieces = 0, tickets = 0, pattes = 0;
     if (!bloque) {
       pieces = reussies + (nbEt === 3 ? 5 : 0) + (meilleurCombo >= 5 ? 3 : 0);
@@ -463,6 +501,7 @@ function partie(p, m, jeu) {
       if (m) {
         if (nbEt > avantEtoiles) pieces += (nbEt - avantEtoiles) * 2; // bonus la première fois qu'on gagne une étoile
         p.scores[cleScore(p, m, jeu)] = Math.max(avantEtoiles, nbEt);
+        if (evalOk) p.scores[cleScore(p, m, jeu) + ':ok'] = 1;
       }
       p.etoiles += nbEt; p.pieces += pieces; p.tickets += tickets;
       pattes = gagnerPattes(p, reussies, nbEt, jeu.defi);
@@ -471,7 +510,7 @@ function partie(p, m, jeu) {
     const monte = niveauDe(p) > avantNiveau;
     if (monte) p.tickets += 1;
     sauver();
-    const msg = bloque ? `Bien entraîné ! Mais en ${p.niveau}, c'est trop loin de ta classe : tu ne gagnes pas de points.` : jeu.defi && nbEt === 0 ? 'Presque ! Il faut 3 bonnes réponses pour réussir le défi.' : nbEt === 3 ? 'Bravo, c\'est parfait !' : nbEt === 2 ? 'Très bien joué !' : nbEt === 1 ? 'C\'est bien, continue !' : 'On réessaie ensemble ?';
+    const msg = jeu.evaluation ? (evalOk ? 'Bravo, palier réussi ! Le palier suivant est ouvert.' : `Il faut ${Math.ceil(PARCOURS_EN.seuil * NOTEES)} bonnes réponses sur ${NOTEES}. Refais les leçons, puis réessaie !`) : bloque ? `Bien entraîné ! Mais en ${p.niveau}, c'est trop loin de ta classe : tu ne gagnes pas de points.` : jeu.defi && nbEt === 0 ? 'Presque ! Il faut 3 bonnes réponses pour réussir le défi.' : nbEt === 3 ? 'Bravo, c\'est parfait !' : nbEt === 2 ? 'Très bien joué !' : nbEt === 1 ? 'C\'est bien, continue !' : 'On réessaie ensemble ?';
     afficher(`${jeu.emoji} ${jeu.titre}`, `
       <div class="bravo">
         <div class="fin-maitresse">${dessinMaitresse(p.maitresse, nbEt ? 'contente' : 'encourage')}</div>

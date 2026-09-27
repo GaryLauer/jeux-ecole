@@ -414,3 +414,6 @@ body.parle .maitresse-svg .bouche { animation: parle .22s ease-in-out infinite a
 .choix-classe button.sans-points { opacity: .5; border-style: dashed; }
 .choix-classe button.sans-points.choisie { opacity: 1; }
 .alerte-classe { font-size: 18px; background: #fff4d6; border-radius: 14px; padding: 10px 14px; color: #8a5a00; max-width: 640px; margin: 8px auto; }
+/* Parcours d'anglais */
+.niveau-en { text-align: center; margin: 26px 0 0; font-size: clamp(22px, 4vw, 30px); }
+.palier-en { margin: 14px 0 10px; font-weight: 700; }
