@@ -223,7 +223,7 @@ function carteApprendre(q) {
   const dans = guillemets ? guillemets[1] : '';
   const lettres = s => /[a-z]/i.test(s);
   if (q.direEn && !lettres(q.bonne)) // écoute : image ou nombre
-    return { type: 'decouvrir', visuel: q.bonne, enonce: q.direEn, dire: 'Regarde bien. En anglais, on dit :', direEn: q.direEn };
+    return { type: 'decouvrir', visuel: q.bonne, sens: q.fr, enonce: q.direEn, dire: q.fr ? `${q.fr}, en anglais, ça se dit :` : 'Regarde bien. En anglais, on dit :', direEn: q.direEn };
   if (/^Comment dit-on/.test(q.enonce) && dans)
     return { type: 'decouvrir', visuel: q.visuel, sens: dans, enonce: q.bonne, dire: `${dans}, en anglais, ça se dit :`, direEn: q.bonne };
   if (/^Que veut dire/.test(q.enonce) && q.direEn)

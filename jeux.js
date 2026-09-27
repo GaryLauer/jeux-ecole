@@ -295,9 +295,9 @@ const NIVEAUX = {
       {
         id: 'anglais', titre: 'Anglais', emoji: '🇬🇧', couleur: '#8e5cd9', jeux: [
           { id: 'mots-en', titre: 'Listen!', emoji: '🎧', gen: () => {
-            const [en, e] = pioche(ANGLAIS_CP);
+            const [en, e, fr] = pioche(ANGLAIS_CP);
             const autres = melange(ANGLAIS_CP.filter(x => x[0] !== en)).slice(0, 3).map(x => x[1]);
-            return { visuel: '🔊', enonce: `Écoute : « ${en} »`, dire: 'Écoute, et touche la bonne image :', direEn: en, choix: melange([e, ...autres]), bonne: e };
+            return { visuel: '🔊', enonce: `Écoute : « ${en} »`, dire: 'Écoute, et touche la bonne image :', direEn: en, fr, choix: melange([e, ...autres]), bonne: e };
           } },
           { id: 'nombres-en', titre: 'Numbers', emoji: '🔟', gen: () => {
             const n = alea(1, 10);

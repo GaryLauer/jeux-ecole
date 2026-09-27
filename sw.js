@@ -1,4 +1,4 @@
-const CACHE = 'jeux-ecole-v9';
+const CACHE = 'jeux-ecole-v10';
 const FILES = ['./', './index.html', './style.css', './app.js', './jeux.js', './cp-plus.js', './cm1-plus.js', './anglais-cours.js', './minijeux.js', './maitresses.js', './maj.js', './android.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES.map(f => new Request(f, { cache: 'reload' })))).then(() => caches.keys()).then(ks => {

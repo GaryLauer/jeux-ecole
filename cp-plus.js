@@ -6,7 +6,20 @@
   const ecouteEn = (liste, consigne = "Écoute, et touche la bonne image :") => () => {
     const [en, e, g] = pioche(liste);
     const autres = melange(liste.filter(x => x[1] !== e && (!g || x[2] !== g))).slice(0, 3).map(x => x[1]);
-    return { visuel: '🔊', enonce: `Écoute : « ${en} »`, dire: consigne, direEn: en, choix: melange([e, ...autres]), bonne: e };
+    return { visuel: '🔊', enonce: `Écoute : « ${en} »`, dire: consigne, direEn: en, fr: FR_EN[en], choix: melange([e, ...autres]), bonne: e };
+  };
+  // Traduction montrée sur la carte « Nouveau mot » avant la question.
+  const FR_EN = {
+    eye: 'l\'œil', ear: 'l\'oreille', nose: 'le nez', mouth: 'la bouche', hand: 'la main', finger: 'le doigt', foot: 'le pied',
+    leg: 'la jambe', arm: 'le bras', tooth: 'la dent', tongue: 'la langue', heart: 'le cœur', brain: 'le cerveau', bone: 'l\'os',
+    hair: 'les cheveux', 'Hello!': 'Bonjour !', 'Goodbye!': 'Au revoir !', 'Good morning!': 'Bonjour ! (le matin)',
+    'Good night!': 'Bonne nuit !', 'Thank you!': 'Merci !', Yes: 'Oui', No: 'Non', happy: 'content', sad: 'triste',
+    angry: 'en colère', tired: 'fatigué', scared: 'avoir peur', hot: 'avoir chaud', cold: 'avoir froid', sick: 'malade',
+    hungry: 'avoir faim', surprised: 'surpris', pig: 'le cochon', sheep: 'le mouton', duck: 'le canard', chicken: 'la poule',
+    rabbit: 'le lapin', mouse: 'la souris', lion: 'le lion', elephant: 'l\'éléphant', monkey: 'le singe', bear: 'l\'ours',
+    frog: 'la grenouille', snake: 'le serpent', tiger: 'le tigre', pear: 'la poire', strawberry: 'la fraise', cake: 'le gâteau',
+    bread: 'le pain', milk: 'le lait', cheese: 'le fromage', egg: 'l\'œuf', carrot: 'la carotte', 'ice cream': 'la glace',
+    chocolate: 'le chocolat', grapes: 'le raisin', lemon: 'le citron', cherry: 'la cerise', tomato: 'la tomate'
   };
   // Tire les éléments d'une liste sans répétition jusqu'à épuisement.
   const sac = liste => { let r = []; return () => { if (!r.length) r = melange(liste); return r.pop(); }; };
