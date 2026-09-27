@@ -32,8 +32,8 @@
       ['sun', '☀️', 'soleil', ['son']], ['rain', '🌧️', 'pluie', ['reign', 'rein']], ['snow', '❄️', 'neige', []], ['wind', '💨', 'vent', []],
       ['cloud', '☁️', 'nuage', ['clouds']], ['rainbow', '🌈', 'arc-en-ciel', ['rain bow']]] },
     { titre: 'At school', emoji: '🏫', mots: [
-      ['book', '📖', 'livre', []], ['pencil', '✏️', 'crayon', []], ['bag', '🎒', 'cartable', []], ['ruler', '📏', 'règle', []],
-      ['scissors', '✂️', 'ciseaux', []], ['teacher', '👩‍🏫', 'maîtresse', []], ['school', '🏫', 'école', []]] },
+      ['book', '📖', 'livre', []], ['pencil', '✏️', 'crayon', []], ['bag', '🎒', 'sac, cartable', ['back']], ['ruler', '📏', 'règle', []],
+      ['scissors', '✂️', 'ciseaux', []], ['teacher', '👩‍🏫', 'maîtresse, maître', []], ['school', '🏫', 'école', []]] },
     { titre: 'Feelings', emoji: '😀', mots: [
       ['happy', '😀', 'content', []], ['sad', '😢', 'triste', []], ['angry', '😠', 'en colère', []], ['tired', '😴', 'fatigué', []],
       ['scared', '😨', 'qui a peur', ['scarred']], ['hungry', '😋', 'qui a faim', []]] }
@@ -48,7 +48,8 @@
       ['I like apples', '🍎❤️', 'j\'aime les pommes', []], ['see you later', '👋', 'à plus tard', ['see ya later']]] },
     { titre: 'Numbers to 20', emoji: '🔟', mots: [
       ['eleven', '11', 'onze', ['11']], ['twelve', '12', 'douze', ['12']], ['thirteen', '13', 'treize', ['13']], ['fourteen', '14', 'quatorze', ['14']],
-      ['fifteen', '15', 'quinze', ['15']], ['sixteen', '16', 'seize', ['16']], ['eighteen', '18', 'dix-huit', ['18']], ['twenty', '20', 'vingt', ['20']]] }
+      ['fifteen', '15', 'quinze', ['15']], ['sixteen', '16', 'seize', ['16']],
+      ['seventeen', '17', 'dix-sept', ['17']], ['eighteen', '18', 'dix-huit', ['18']], ['nineteen', '19', 'dix-neuf', ['19']], ['twenty', '20', 'vingt', ['20']]] }
   ];
 
   const estImageEmoji = s => !/[a-z]/i.test(s);

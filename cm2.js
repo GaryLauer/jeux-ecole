@@ -101,7 +101,7 @@
   const genGrandsNombres = () => {
     const t = alea(0, 6);
     if (t === 0) {
-      const n = alea(10000000, 999999999), s = String(n), [nom, pos] = pioche(RANGS);
+      const n = alea(100000000, 999999999), s = String(n), [nom, pos] = pioche(RANGS);
       return qcm({ visuel: gros(sp(n)), enonce: `Quel est le chiffre des ${nom} ?` }, s[s.length - 1 - pos], [...s.split(''), '0', '1', '5', '9']);
     }
     if (t === 1) {
