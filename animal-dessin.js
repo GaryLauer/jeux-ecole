@@ -4,9 +4,9 @@
 
 const STADES = [
   { id: 'bebe', nom: 'Bébé', xp: 0, s: 0.72, H: 70, BX: 50, B: 45, oeil: 1.3, taille: 25 },
-  { id: 'enfant', nom: 'Enfant', xp: 500, s: 0.83, H: 64, BX: 56, B: 55, oeil: 1.15, taille: 45 },
-  { id: 'ado', nom: 'Ado', xp: 1500, s: 0.92, H: 58, BX: 61, B: 66, oeil: 1.05, taille: 65 },
-  { id: 'adulte', nom: 'Adulte', xp: 3500, s: 1, H: 55, BX: 66, B: 77, oeil: 1, taille: 85 }
+  { id: 'enfant', nom: 'Enfant', xp: 10000, s: 0.83, H: 64, BX: 56, B: 55, oeil: 1.15, taille: 45 },
+  { id: 'ado', nom: 'Ado', xp: 30000, s: 0.92, H: 58, BX: 61, B: 66, oeil: 1.05, taille: 65 },
+  { id: 'adulte', nom: 'Adulte', xp: 70000, s: 1, H: 55, BX: 66, B: 77, oeil: 1, taille: 85 }
 ];
 function stadeDe(xp) { let s = STADES[0]; STADES.forEach(x => { if (xp >= x.xp) s = x; }); return s; }
 function rangStade(id) { return STADES.findIndex(s => s.id === id); }

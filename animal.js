@@ -170,13 +170,17 @@ function nouvelAnimal(p, nom, fille) {
     espece: p.niveau === 'CP' ? 'panda' : 'panthere', nom, fille, ne: Date.now(), xp: 0,
     ventre: 70, eau: 70, proprete: 85, energie: 80, bonheur: 80, sante: 100,
     malade: false, dort: false, cacas: 0, couche: false, prochainCaca: 0, pansement: 0, brille: 0,
-    maj: Date.now(), tenue: {}, sac: { 'biberon-lait': 2, 'biberon-eau': 1, couches: 1 }, possede: {}, decor: 'chambre', vuStade: 'bebe'
+    maj: Date.now(), rythme: 20, tenue: {}, sac: { 'biberon-lait': 2, 'biberon-eau': 1, couches: 1 }, possede: {}, decor: 'chambre', vuStade: 'bebe'
   };
 }
 const borne = v => Math.max(0, Math.min(100, v));
 
 // Le temps passe : l'animal a faim, soif, se salit… même quand l'appli est fermée (au plus 3 jours comptés).
+// Croissance 20 fois plus lente depuis le 27/09/2026 : l'XP des animaux déjà nés est multipliée par 20
+// pour qu'ils gardent leur âge et leur avancée ; seule la suite est plus lente.
+function migrer(a) { if (!a.rythme) { a.xp = Math.round(a.xp * 20); a.rythme = 20; } }
 function vivre(a) {
+  migrer(a);
   const now = Date.now();
   let h = Math.min(Math.max(0, (now - (a.maj || now)) / 36e5), 72);
   a.maj = now;
@@ -229,7 +233,7 @@ function donnerXp(a, n) { a.xp += n; }
 function gagnerPattes(p, reussies, nbEt, defi) {
   const n = reussies * 2 + nbEt * 3 + (defi && nbEt >= 1 ? 10 : 0);
   p.pattes = (p.pattes || 0) + n;
-  if (p.animal) donnerXp(p.animal, reussies * 10);
+  if (p.animal) { migrer(p.animal); donnerXp(p.animal, reussies * 10); }
   return n;
 }
 function alerteAnimal(p) {
