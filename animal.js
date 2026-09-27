@@ -892,11 +892,11 @@ function afficherRayon(p) {
   zone.querySelectorAll('.mettre').forEach(b => b.onclick = () => { porter(p, ARTICLE[b.dataset.id]); afficherRayon(p); });
 }
 function carteArticle(p, it) {
-  const a = p.animal;
+  const a = p.animal, propre = { ...a, proprete: 100, couche: false, cacas: 0, brille: 0, pansement: 0 };
   const r = rangStade(stadeDe(a.xp).id);
   const tropJeune = it.min && r < rangStade(it.min), tropGrand = it.max && r > rangStade(it.max);
   const possede = it.durable && a.possede[it.id];
-  const visuel = it.slot ? `<div class="apercu">${dessinAnimal(a, { tenue: { [it.slot]: it.id }, humeur: 'content', taches: 0, serre: true })}</div>`
+  const visuel = it.slot ? `<div class="apercu">${dessinAnimal(propre, { tenue: { [it.slot]: it.id }, humeur: 'content', serre: true })}</div>`
     : it.decor ? `<div class="apercu decor-${it.decor} mini-decor">${DECORS[it.decor].deco.map(([em, x, y, t]) => `<span style="left:${x}%;top:${y}%;font-size:${t * 0.55}em">${em}</span>`).join('')}</div>`
       : `<div class="ic-grand">${iconeArticle(it)}</div>`;
   const effets = it.ef ? `<div class="effets">${Object.entries(it.ef).map(([k, v]) => `<span class="${v < 0 ? 'moins' : ''}">${JAUGES.find(j => j.id === k).ic} ${v > 0 ? '+' : ''}${v}</span>`).join('')}</div>` : '';
