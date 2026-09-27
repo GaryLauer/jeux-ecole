@@ -716,5 +716,4 @@ function son(type) {
 }
 
 if ('speechSynthesis' in window) speechSynthesis.getVoices();
-if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js');
 accueil();
