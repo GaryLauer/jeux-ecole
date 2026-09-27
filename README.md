@@ -12,3 +12,5 @@ Mon animal : la grande élève une panthère bleu foncé, la petite un panda (an
 Classes : CP, CE1, CE2, CM1, CM2 (contenu dans jeux.js, cp-plus.js, cm1-plus.js, ce1.js, ce2.js, cm2.js ; petits cours du bouton « ? » dans cours.js et en bas de ce1.js, ce2.js, cm2.js). L'enfant choisit sa classe dans « Apprendre ». Sa vraie classe se règle dans l'espace parents : une classe en dessous, il gagne ses points normalement ; deux classes ou plus en dessous, il peut jouer mais ne gagne rien.
 
 Vérifier le contenu : `node outils/verifier.js` (ou `node outils/verifier.js CE2` pour une seule classe).
+
+Multiplication rapide (loup.js) : en maths du CE2, CM1 et CM2, une course contre le loup avec les tables de 0 à 10. Carrefours : à gauche tables de 0 à 3, au centre de 4 à 7, à droite de 7 à 10. Vitesse 1x à 5x choisie avant la partie ; les gains sont multipliés par la vitesse (la moitié si le loup croque l'enfant).

@@ -417,3 +417,39 @@ body.parle .maitresse-svg .bouche { animation: parle .22s ease-in-out infinite a
 /* Parcours d'anglais */
 .niveau-en { text-align: center; margin: 26px 0 0; font-size: clamp(22px, 4vw, 30px); }
 .palier-en { margin: 14px 0 10px; font-weight: 700; }
+
+/* ---------- Multiplication rapide : la course contre le loup (loup.js) ---------- */
+.loup-depart { text-align: center; }
+.loup-affiche { font-size: clamp(50px, 12vw, 90px); display: flex; justify-content: center; gap: 4vw; }
+.loup-affiche .loup-fille { display: inline-block; transform: scaleX(-1); animation: pop 1s infinite alternate; }
+.loup-affiche .loup-bete { display: inline-block; transform: scaleX(-1); }
+.loup-regle { font-size: clamp(18px, 3.4vw, 24px); margin: 6px 0 14px; }
+.loup-chemins-info { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+.loup-chemins-info div { background: var(--c); color: #fff; border-radius: 16px; padding: 10px 6px; font-size: clamp(15px, 2.8vw, 20px); box-shadow: var(--ombre); }
+.loup-titre-vitesse { font-size: 24px; font-weight: bold; margin: 8px 0; }
+.loup-vitesses { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.loup-vitesses button { background: #fff; color: var(--texte); border: 4px solid #e5484d; border-radius: 18px; padding: 10px 14px; min-width: 76px; box-shadow: var(--ombre); display: flex; flex-direction: column; align-items: center; }
+.loup-vitesses button b { font-size: 30px; }
+.loup-vitesses button small { font-size: 14px; color: #7a7066; }
+.loup-vitesses button.choisie { background: #e5484d; color: #fff; transform: scale(1.1); }
+.loup-vitesses button.choisie small { color: #fff; }
+.loup-record { font-size: 20px; }
+.loup-jeu { display: flex; flex-direction: column; gap: 8px; max-width: 1000px; margin: 0 auto; }
+.loup-haut { display: flex; align-items: center; gap: 10px; }
+.loup-haut .progression { flex: 1; position: relative; overflow: visible; height: 18px; margin-right: 16px; }
+.loup-prog { height: 100%; background: var(--vert); border-radius: inherit; transition: width .3s; }
+.loup-borne { position: absolute; top: 50%; transform: translate(-50%, -50%); font-size: 20px; }
+.loup-infos { display: flex; gap: 8px; font-size: 20px; font-weight: bold; }
+.loup-infos span { background: #fff; border-radius: 20px; padding: 4px 12px; box-shadow: var(--ombre); white-space: nowrap; }
+.loup-scene { display: block; width: 100%; border-radius: 20px; box-shadow: var(--ombre); }
+.loup-question { position: relative; text-align: center; background: #fff; border-radius: 20px; padding: 10px; box-shadow: var(--ombre); margin-bottom: 10px; }
+.loup-enonce { font-size: clamp(38px, 9vw, 64px) !important; }
+.loup-choix button { min-height: 76px; padding: 12px 8px; }
+.loup-consigne { text-align: center; font-size: clamp(22px, 4.5vw, 30px); font-weight: bold; margin: 8px 0; }
+.loup-perdu { color: var(--rouge); animation: secoue .4s 3; }
+.loup-gagne { color: var(--vert); animation: pop .5s; }
+.loup-carrefour { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.loup-carrefour button { background: var(--c); color: #fff; border-radius: 20px; padding: 14px 6px; box-shadow: var(--ombre); display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 130px; }
+.loup-carrefour button span { font-size: 38px; }
+.loup-carrefour button b { font-size: clamp(18px, 3.6vw, 26px); }
+.loup-carrefour button small { font-size: clamp(14px, 2.8vw, 18px); }

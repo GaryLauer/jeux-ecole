@@ -231,7 +231,8 @@ function listeJeux(p, m) {
     </div>`, { retour: true, profil: p });
   $ecran.querySelectorAll('.tuile').forEach(b => b.onclick = () => {
     if (b.dataset.bloque) { son('faux'); b.classList.remove('faux'); void b.offsetWidth; b.classList.add('faux'); parler('Termine d\'abord la leçon d\'avant !'); return; }
-    aller(() => partie(p, m, m.jeux[b.dataset.i]));
+    const j = m.jeux[b.dataset.i];
+    aller(() => j.lancer ? j.lancer(p, m, j) : partie(p, m, j)); // un jeu peut avoir son propre écran (la course du loup)
   });
 }
 
@@ -791,7 +792,8 @@ const SONS = {
   faux: { notes: [220, 180], type: 'sawtooth', pas: 0.1 },
   bonus: { notes: [523, 659, 784, 1047, 1319], type: 'triangle', pas: 0.08 },
   tic: { notes: [880], type: 'sine', pas: 0.05 },
-  piece: { notes: [988, 1319], type: 'square', pas: 0.07 }
+  piece: { notes: [988, 1319], type: 'square', pas: 0.07 },
+  croque: { notes: [180, 140, 90], type: 'sawtooth', pas: 0.12 }
 };
 function son(type) {
   if (type === true) type = 'bon';
