@@ -177,16 +177,22 @@ function listeJeux(p, m) {
     <div class="grille">
       ${m.jeux.map((j, i) => {
         const best = p.scores[`${m.id}/${j.id}`] || 0;
-        return `<button class="tuile" style="--c:${m.couleur}" data-i="${i}"><span class="emoji">${j.emoji}</span>${j.titre}<small>${'⭐'.repeat(best) + '☆'.repeat(3 - best)}</small></button>`;
+        const verrou = m.progressif && i > 0 && !(p.scores[`${m.id}/${m.jeux[i - 1].id}`] >= 1);
+        return verrou
+          ? `<button class="tuile verrou" data-i="${i}" data-bloque="1"><span class="emoji">🔒</span>${j.titre}<small>Finis la leçon d'avant</small></button>`
+          : `<button class="tuile" style="--c:${m.couleur}" data-i="${i}"><span class="emoji">${j.emoji}</span>${j.titre}<small>${'⭐'.repeat(best) + '☆'.repeat(3 - best)}</small></button>`;
       }).join('')}
     </div>`, { retour: true, profil: p });
-  $ecran.querySelectorAll('.tuile').forEach(b => b.onclick = () => aller(() => partie(p, m, m.jeux[b.dataset.i])));
+  $ecran.querySelectorAll('.tuile').forEach(b => b.onclick = () => {
+    if (b.dataset.bloque) { son('faux'); b.classList.remove('faux'); void b.offsetWidth; b.classList.add('faux'); parler('Termine d\'abord la leçon d\'avant !'); return; }
+    aller(() => partie(p, m, m.jeux[b.dataset.i]));
+  });
 }
 
 // Le défi du jour : 10 questions tirées de toutes les matières de l'enfant.
 function jeuDefi(p) {
   const tous = [];
-  NIVEAUX[p.niveau].matieres.forEach(m => m.jeux.forEach(j => tous.push({ m, j })));
+  NIVEAUX[p.niveau].matieres.filter(m => !m.progressif).forEach(m => m.jeux.forEach(j => tous.push({ m, j })));
   return { id: 'defi', titre: 'Défi du jour', emoji: '🎯', defi: true, gen: () => { const x = pioche(tous); const q = x.j.gen(); q.matiere = x.m; return q; } };
 }
 
@@ -196,28 +202,32 @@ function partie(p, m, jeu) {
   const mt = MAITRESSES[p.maitresse];
   const lecture = NIVEAUX[p.niveau].lecture;
   const deja = new Set();
+  const seq = jeu.sequence ? jeu.sequence() : null; // leçon : questions dans un ordre fixé
+  const TOTAL = seq ? seq.length : NB_QUESTIONS;
 
   function suivante() {
-    if (n >= NB_QUESTIONS) return fin();
+    if (n >= TOTAL) return fin();
     let q, essais = 0;
-    do { q = jeu.gen(); } while (deja.has(cleQ(q)) && essais++ < 20);
+    if (seq) q = seq[n];
+    else do { q = jeu.gen(); } while (deja.has(cleQ(q)) && essais++ < 20);
     deja.add(cleQ(q));
     const mq = q.matiere || m;
     let premierEssai = true, erreurs = 0;
-    const zone = q.type === 'lettres' ? zoneLettres(q) : q.type === 'saisie' ? zoneSaisie() : `<div class="choix">${q.choix.map(c => `<button data-v="${echapper(c)}">${c}</button>`).join('')}</div>`;
+    const zone = q.type === 'lettres' ? zoneLettres(q) : q.type === 'saisie' ? zoneSaisie() : q.type === 'parler' ? zoneParler() : `<div class="choix">${q.choix.map(c => `<button data-v="${echapper(c)}">${c}</button>`).join('')}</div>`;
     afficher(`${jeu.emoji} ${jeu.titre}`, `
       <div class="jeu">
         <div class="haut-jeu">
-          <div class="progression"><div style="width:${n / NB_QUESTIONS * 100}%"></div><span class="coureur" style="left:max(16px, ${n / NB_QUESTIONS * 100}%)">${p.avatar}</span></div>
+          <div class="progression"><div style="width:${n / TOTAL * 100}%"></div><span class="coureur" style="left:max(16px, ${n / TOTAL * 100}%)">${p.avatar}</span></div>
           <div class="combo ${combo >= 2 ? 'visible' : ''}">🔥 ×${combo}</div>
         </div>
         <div class="question entre avec-maitresse">
           <div class="prof-coin">${dessinMaitresse(p.maitresse, 'normal')}<div class="bulle-prof"></div></div>
           ${jeu.defi ? `<div class="aide">${mq.emoji} ${mq.titre}</div>` : ''}
           <div class="visuel">${q.visuel || ''}</div>
-          <div class="enonce">${typo(q.enonce)}</div>
+          <div class="enonce ${q.type === 'parler' ? 'mot-anglais' : ''}">${typo(q.enonce)}</div>
+          ${q.sens ? `<div class="aide">🇫🇷 ${echapper(q.sens)}</div>` : ''}
           ${q.aide ? `<div class="aide">${q.aide}</div>` : ''}
-          ${('speechSynthesis' in window) ? '<button class="ecouter">🔊 Écouter</button>' : ''}
+          ${('speechSynthesis' in window) && q.type !== 'parler' ? '<button class="ecouter">🔊 Écouter</button>' : ''}
         </div>
         ${zone}
       </div>`, { retour: true, profil: p });
@@ -253,7 +263,54 @@ function partie(p, m, jeu) {
       if (el) { el.classList.remove('faux'); void el.offsetWidth; el.classList.add('faux'); }
     }
 
-    if (q.type === 'lettres') {
+    if (q.type === 'parler') {
+      const zoneP = $ecran.querySelector('.parler');
+      const info = zoneP.querySelector('.info-micro');
+      const micro = zoneP.querySelector('.micro');
+      let ecoute = null;
+      const modele = () => { taire(); parler(q.direEn, 'en-GB'); };
+      const sansMicro = texte => {
+        info.innerHTML = texte;
+        micro.hidden = true;
+        zoneP.querySelector('.repete').hidden = false;
+      };
+      zoneP.querySelector('.ecoute-en').onclick = modele;
+      zoneP.querySelector('.repete').onclick = () => gagne(zoneP.querySelector('.repete'));
+      if (!Reco) sansMicro('Cet appareil ne peut pas écouter ta voix. Répète le mot à voix haute, puis touche le bouton vert.');
+      micro.onclick = () => {
+        if (ecoute) return;
+        taire();
+        micro.classList.add('actif'); micro.innerHTML = '👂 Je t\'écoute…';
+        info.textContent = 'Dis le mot en anglais !';
+        ecoute = ecouterEnfant(alts => {
+          ecoute = null; micro.classList.remove('actif'); micro.innerHTML = '🎤 À toi !';
+          const trouve = correspondAnglais(alts, q);
+          if (trouve) {
+            const c = trouve.c;
+            const note = c === 0 || c >= 0.75 ? 'Super accent ! 🌟' : c >= 0.45 ? 'Bien dit ! Ton accent est presque parfait.' : 'C\'est ça ! Imite encore mieux la maîtresse.';
+            info.innerHTML = `<b>${note}</b>`;
+            micro.disabled = true;
+            gagne(micro);
+            reagit('contente', note.replace(' 🌟', ''), false);
+            return;
+          }
+          info.innerHTML = alts.length ? `J'ai entendu : « ${echapper(alts[0].t)} ». Écoute encore et réessaie !` : 'Je n\'ai rien entendu. Parle un peu plus fort !';
+          rate(micro);
+          setTimeout(modele, 1200);
+          if (erreurs >= 3) {
+            info.innerHTML += '<br><button class="bouton second suivant">On continue ➜</button>';
+            info.querySelector('.suivant').onclick = () => { n++; suivante(); };
+          }
+        }, err => {
+          ecoute = null; micro.classList.remove('actif'); micro.innerHTML = '🎤 À toi !';
+          if (err === 'not-allowed' || err === 'service-not-allowed') sansMicro('Le micro n\'est pas autorisé. Demande à un parent de l\'autoriser, ou répète le mot puis touche le bouton vert.');
+          else if (err === 'network') sansMicro('Il faut internet pour vérifier ton accent. Répète le mot à voix haute, puis touche le bouton vert.');
+          else if (err === 'no-speech' || err === 'aborted') info.textContent = 'Je n\'ai rien entendu. Touche le micro et parle !';
+          else sansMicro('Le micro ne marche pas. Répète le mot à voix haute, puis touche le bouton vert.');
+        });
+      };
+      nettoyage = () => { if (ecoute) try { ecoute.abort(); } catch (e) {} };
+    } else if (q.type === 'lettres') {
       const cible = [...q.bonne];
       let pos = 0;
       const cases = $ecran.querySelectorAll('.mot span');
@@ -317,7 +374,7 @@ function partie(p, m, jeu) {
       <div class="bravo">
         <div class="fin-maitresse">${dessinMaitresse(p.maitresse, nbEt ? 'contente' : 'encourage')}</div>
         <div class="gros">${nbEt ? [1, 2, 3].map(i => `<span class="etoile ${i <= nbEt ? 'pleine' : ''}" style="animation-delay:${i * .25}s">⭐</span>`).join('') : '💪'}</div>
-        <p>${msg}<br><small>${reussies} bonnes réponses du premier coup sur ${NB_QUESTIONS}${meilleurCombo >= 3 ? ` · meilleure série 🔥 ${meilleurCombo}` : ''}</small></p>
+        <p>${msg}<br><small>${reussies} bonnes réponses du premier coup sur ${TOTAL}${meilleurCombo >= 3 ? ` · meilleure série 🔥 ${meilleurCombo}` : ''}</small></p>
         <div class="gains">
           <div class="gain">🪙 <b>+${pieces}</b></div>
           ${tickets ? `<div class="gain">🎟️ <b>+${tickets}</b></div>` : ''}
@@ -539,6 +596,35 @@ function zoneLettres(q) {
   const lettres = melange([...q.bonne]);
   return `<div class="mot">${[...q.bonne].map(() => '<span></span>').join('')}</div>
     <div class="tuiles">${lettres.map(l => `<button data-l="${echapper(l)}">${l}</button>`).join('')}</div>`;
+}
+function zoneParler() {
+  return `<div class="parler">
+    <div class="boutons-parler"><button class="bouton violet ecoute-en">🔊 Écouter</button><button class="bouton micro">🎤 À toi !</button><button class="bouton repete" hidden>✔ J'ai répété</button></div>
+    <div class="info-micro">Écoute, puis touche le micro et répète !</div>
+  </div>`;
+}
+// Reconnaissance vocale (Chrome sur Android) pour vérifier la prononciation.
+const Reco = window.SpeechRecognition || window.webkitSpeechRecognition;
+function ecouterEnfant(ok, erreur) {
+  const r = new Reco();
+  r.lang = 'en-GB'; r.maxAlternatives = 5; r.interimResults = false; r.continuous = false;
+  let fini = false;
+  r.onresult = e => { fini = true; ok([...e.results[0]].map(a => ({ t: a.transcript, c: a.confidence || 0 }))); };
+  r.onerror = e => { fini = true; erreur(e.error); };
+  r.onend = () => { if (!fini) { fini = true; ok([]); } };
+  try { r.start(); } catch (e) { erreur('start'); }
+  return r;
+}
+function normEn(s) {
+  return String(s).toLowerCase().replace(/[’`]/g, "'").replace(/\bi'm\b/g, 'i am').replace(/\bwhat's\b/g, 'what is').replace(/-/g, ' ').replace(/[^a-z0-9' ]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+function correspondAnglais(alts, q) {
+  const cibles = [q.bonne, ...(q.accepte || [])].map(normEn);
+  for (const a of alts) {
+    const t = ' ' + normEn(a.t) + ' ';
+    if (cibles.some(c => t.includes(' ' + c + ' '))) return a;
+  }
+  return null;
 }
 function zoneSaisie() {
   return `<div class="saisie"><input autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Écris ici"><button class="bouton">Valider</button></div>`;

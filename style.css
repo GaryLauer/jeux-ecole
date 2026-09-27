@@ -178,3 +178,17 @@ body.parle .maitresse-svg .bouche { animation: parle .22s ease-in-out infinite a
   .perso-maitresse { width: 130px; }
   .mascotte { gap: 10px; }
 }
+
+/* ---------- Cours d'anglais : écoute et répète ---------- */
+.enonce.mot-anglais { font-size: clamp(36px, 8vw, 60px); color: #2f6fd6; letter-spacing: 1px; }
+.parler { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
+.boutons-parler { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.boutons-parler .bouton { font-size: 28px; padding: 18px 30px; }
+.bouton.micro { background: var(--vert); }
+.bouton.micro.actif { background: var(--rouge); animation: pulse 1s infinite; }
+.bouton.repete { background: var(--vert); }
+.bouton.micro.faux { animation: secoue .4s; }
+@keyframes pulse { 50% { transform: scale(1.08); box-shadow: 0 0 0 10px rgba(229,72,77,.25); } }
+.info-micro { font-size: 20px; text-align: center; min-height: 30px; max-width: 600px; }
+.tuile.verrou { background: #cfc6b8; color: #fff; }
+.tuile.verrou.faux { animation: secoue .4s; }
