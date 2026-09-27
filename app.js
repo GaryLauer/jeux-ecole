@@ -62,7 +62,12 @@ function lireQuestion(q, avecChoix) {
   speechSynthesis.cancel();
   const choixLisibles = avecChoix && q.choix && q.choix.every(c => /[a-zà-ÿ0-9]/i.test(c));
   parler(q.dire || q.enonce, 'fr-FR', () => {
-    if (q.direEn) parler(q.direEn, 'en-GB');
+    if (q.direEn) parler(q.direEn, 'en-GB', () => {
+      // suite éventuelle : [[texte, langue], …]
+      const suite = (q.apres || []).slice();
+      const dire = () => { const x = suite.shift(); if (x) parler(x[0], x[1], dire); };
+      dire();
+    });
     else if (choixLisibles) parler(q.choix.join(', ou, '));
   });
 }
@@ -196,13 +201,48 @@ function jeuDefi(p) {
   return { id: 'defi', titre: 'Défi du jour', emoji: '🎯', defi: true, gen: () => { const x = pioche(tous); const q = x.j.gen(); q.matiere = x.m; return q; } };
 }
 
+// Pour les jeux d'anglais : 2 fois (5 cartes « Nouveau mot », puis les 5 questions sur ces mots).
+function sequenceAnglais(jeu) {
+  const qs = [], deja = new Set();
+  for (let essais = 0; qs.length < NB_QUESTIONS && essais < 200; essais++) {
+    const q = jeu.gen();
+    if (deja.has(cleQ(q)) || deja.has('b:' + q.bonne)) continue;
+    deja.add(cleQ(q)); deja.add('b:' + q.bonne);
+    qs.push(q);
+  }
+  const seq = [];
+  for (let i = 0; i < qs.length; i += 5) {
+    const groupe = qs.slice(i, i + 5);
+    groupe.forEach(q => seq.push(carteApprendre(q)));
+    melange(groupe).forEach(q => { q.indice = true; seq.push(q); });
+  }
+  return seq;
+}
+function carteApprendre(q) {
+  const guillemets = /«\s*(.+?)\s*»/.exec(q.enonce);
+  const dans = guillemets ? guillemets[1] : '';
+  const lettres = s => /[a-z]/i.test(s);
+  if (q.direEn && !lettres(q.bonne)) // écoute : image ou nombre
+    return { type: 'decouvrir', visuel: q.bonne, enonce: q.direEn, dire: 'Regarde bien. En anglais, on dit :', direEn: q.direEn };
+  if (/^Comment dit-on/.test(q.enonce) && dans)
+    return { type: 'decouvrir', visuel: q.visuel, sens: dans, enonce: q.bonne, dire: `${dans}, en anglais, ça se dit :`, direEn: q.bonne };
+  if (/^Que veut dire/.test(q.enonce) && q.direEn)
+    return { type: 'decouvrir', visuel: q.visuel, sens: q.bonne, enonce: q.direEn, dire: `${q.bonne}, en anglais, ça se dit :`, direEn: q.direEn };
+  if (/réponse à/.test(q.enonce) && q.direEn)
+    return { type: 'decouvrir', visuel: '💬', avant: `🇬🇧 ${q.direEn}`, enonce: q.bonne, dire: 'Quand on te demande :', direEn: q.direEn, apres: [['on répond :', 'fr-FR'], [q.bonne, 'en-GB']] };
+  if (dans) // ex. « Quel jour vient après « Monday » ? » : partie française, mot anglais, puis la réponse
+    return { type: 'decouvrir', visuel: q.visuel, avant: q.enonce, enonce: q.bonne, dire: q.enonce.split('«')[0], direEn: dans, apres: [['La réponse est :', 'fr-FR'], [q.bonne, 'en-GB']] };
+  return { type: 'decouvrir', visuel: q.visuel, avant: q.enonce, enonce: q.bonne, dire: `${q.enonce} La réponse est :`, direEn: q.bonne };
+}
+
 function partie(p, m, jeu) {
   let n = 0, reussies = 0, combo = 0, meilleurCombo = 0;
   maitresseActive = p.maitresse;
   const mt = MAITRESSES[p.maitresse];
   const lecture = NIVEAUX[p.niveau].lecture;
   const deja = new Set();
-  const seq = jeu.sequence ? jeu.sequence() : null; // leçon : questions dans un ordre fixé
+  // Leçon : questions dans un ordre fixé. Jeux d'anglais : on apprend les mots avant de les demander.
+  const seq = jeu.sequence ? jeu.sequence() : (m && m.id === 'anglais' && !jeu.defi) ? sequenceAnglais(jeu) : null;
   const TOTAL = seq ? seq.length : NB_QUESTIONS;
   const NOTEES = seq ? seq.filter(q => q.type !== 'decouvrir').length : NB_QUESTIONS; // les cartes « nouveau mot » ne comptent pas
 
@@ -224,10 +264,10 @@ function partie(p, m, jeu) {
         <div class="question entre avec-maitresse">
           <div class="prof-coin">${dessinMaitresse(p.maitresse, 'normal')}<div class="bulle-prof"></div></div>
           ${jeu.defi ? `<div class="aide">${mq.emoji} ${mq.titre}</div>` : ''}
-          ${q.type === 'decouvrir' ? '<div class="nouveau-mot">✨ Nouveau mot</div>' : ''}
-          <div class="visuel">${q.visuel || ''}</div>
-          ${q.type === 'decouvrir' ? `<div class="mot-fr">🇫🇷 ${echapper(q.sens)}</div><div class="fleche-mot">⬇</div>` : ''}
-          <div class="enonce ${q.type === 'parler' || q.type === 'decouvrir' ? 'mot-anglais' : ''}">${q.type === 'decouvrir' ? '🇬🇧 ' : ''}${typo(q.enonce)}</div>
+          ${q.type === 'decouvrir' ? `<div class="nouveau-mot">✨ ${/\s/.test(q.enonce.trim()) ? 'J\'apprends' : 'Nouveau mot'}</div>` : ''}
+          <div class="visuel">${q.type === 'decouvrir' && q.visuel === '🇬🇧' ? '' : q.visuel || ''}</div>
+          ${q.type === 'decouvrir' && (q.sens || q.avant) ? `<div class="mot-fr ${q.avant ? 'petit' : ''}">${q.avant ? typo(q.avant) : '🇫🇷 ' + echapper(q.sens)}</div><div class="fleche-mot">⬇</div>` : ''}
+          <div class="enonce ${q.type === 'parler' || q.type === 'decouvrir' ? 'mot-anglais' : ''}">${q.type === 'decouvrir' && !q.avant ? '🇬🇧 ' : ''}${typo(q.enonce)}</div>
           ${q.sens && q.type !== 'decouvrir' ? `<div class="aide">🇫🇷 ${echapper(q.sens)}</div>` : ''}
           ${q.aide ? `<div class="aide">${q.aide}</div>` : ''}
           ${('speechSynthesis' in window) && q.type !== 'parler' && q.type !== 'decouvrir' ? '<button class="ecouter">🔊 Écouter</button>' : ''}

@@ -196,3 +196,4 @@ body.parle .maitresse-svg .bouche { animation: parle .22s ease-in-out infinite a
 .mot-fr { font-size: clamp(28px, 6vw, 44px); font-weight: 800; color: #5a4a3a; }
 .fleche-mot { font-size: 26px; color: #2f6fd6; line-height: 1; }
 .choix button.indice { outline: 5px solid #ffd43b; animation: pulse 0.9s ease-in-out infinite; }
+.mot-fr.petit { font-size: clamp(20px, 4.5vw, 30px); }
