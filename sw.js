@@ -1,5 +1,5 @@
-const CACHE = 'jeux-ecole-v10';
-const FILES = ['./', './index.html', './style.css', './app.js', './jeux.js', './cp-plus.js', './cm1-plus.js', './anglais-cours.js', './minijeux.js', './maitresses.js', './maj.js', './android.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
+const CACHE = 'jeux-ecole-v11';
+const FILES = ['./', './index.html', './style.css', './app.js', './jeux.js', './cp-plus.js', './cm1-plus.js', './anglais-cours.js', './minijeux.js', './maitresses.js', './animal-dessin.js', './animal.js', './maj.js', './android.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES.map(f => new Request(f, { cache: 'reload' })))).then(() => caches.keys()).then(ks => {
     // Les versions d'avant la v9 n'ont pas le bouton de mise à jour : on les remplace tout de suite.

@@ -22,7 +22,7 @@ const ALBUM = [
 const CHANCES = { commun: 0.75, rare: 0.21, 'légendaire': 0.04 };
 
 function nouveauProfil(id, nom, niveau, avatar) {
-  return { id, nom, niveau, avatar, maitresse: niveau === 'CP' ? 'panda' : 'leopard', etoiles: 0, scores: {}, pieces: 0, tickets: 1, xp: 0, album: {}, records: {}, serie: { jour: '', n: 0 }, defi: '', jeuxDuJour: { jour: '', n: 0 } };
+  return { id, nom, niveau, avatar, maitresse: niveau === 'CP' ? 'panda' : 'leopard', etoiles: 0, scores: {}, pieces: 0, tickets: 1, xp: 0, album: {}, records: {}, serie: { jour: '', n: 0 }, defi: '', jeuxDuJour: { jour: '', n: 0 }, pattes: 0, animal: null };
 }
 function charger() {
   let d;
@@ -87,6 +87,7 @@ function majBourse(p) {
   if (!p) return;
   document.getElementById('nbPieces').textContent = p.pieces;
   document.getElementById('nbTickets').textContent = p.tickets;
+  document.getElementById('nbPattes').textContent = p.pattes || 0;
 }
 function quitter() { if (nettoyage) { const f = nettoyage; nettoyage = null; f(); } taire(); }
 function aller(fn) { quitter(); pile.push(ecranActuel); ecranActuel = fn; fn(); }
@@ -126,7 +127,9 @@ function maison(p) {
   const lecture = NIVEAUX[p.niveau].lecture;
   maitresseActive = p.maitresse;
   const mt = MAITRESSES[p.maitresse];
-  const bulle = pioche([
+  const alerte = alerteAnimal(p);
+  const nomAnimal = p.animal ? p.animal.nom : (p.niveau === 'CP' ? 'ton bébé panda' : 'ton bébé panthère');
+  const bulle = alerte && !p.animal.dort ? `${p.animal.nom} t'appelle : « ${alerte.replace(/\s*\p{Extended_Pictographic}\uFE0F?/gu, '')} »` : !p.animal && Math.random() < 0.5 ? `Un bébé t'attend dans la maison des animaux ! Va vite l'adopter.` : pioche([
     pioche(mt.salut),
     `Coucou ${echapper(p.nom)} ! C'est moi, ${mt.nom}.`,
     p.tickets ? `Tu as ${p.tickets} ticket${p.tickets > 1 ? 's' : ''} pour la salle de jeux !` : 'Gagne 2 étoiles dans un jeu pour avoir un ticket !',
@@ -144,10 +147,11 @@ function maison(p) {
       <span>${p.serie.n > 1 ? `🔥 ${p.serie.n} jours de suite` : '🔥 1er jour'}</span>
     </div>
     <div class="grille portes">
-      <button class="tuile" style="--c:#4f8ef7" data-porte="apprendre"><span class="emoji">📚</span>Apprendre<small>Gagne des pièces 🪙</small></button>
+      <button class="tuile" style="--c:#4f8ef7" data-porte="apprendre"><span class="emoji">📚</span>Apprendre<small>Gagne des pièces 🪙 et des pattes 🐾</small></button>
       <button class="tuile ${defiFait ? 'fait' : 'brille'}" style="--c:#e5484d" data-porte="defi"><span class="emoji">🎯</span>Défi du jour<small>${defiFait ? 'Réussi ! Reviens demain' : '+2 🎟️ et +20 🪙'}</small></button>
       <button class="tuile" style="--c:#8e5cd9" data-porte="salle"><span class="emoji">🎮</span>Salle de jeux<small>${p.tickets} 🎟️</small></button>
       <button class="tuile" style="--c:#1fa5a5" data-porte="album"><span class="emoji">📒</span>Mon album<small>${nbAlbum} / ${ALBUM.length}</small></button>
+      <button class="tuile ${alerte || !p.animal ? 'brille' : ''}" style="--c:${p.niveau === 'CP' ? '#3a3a48' : '#233270'}" data-porte="animal"><span class="emoji">${p.niveau === 'CP' ? '🐼' : '🐆'}</span>${p.animal ? echapper(p.animal.nom) : p.niveau === 'CP' ? 'Mon panda' : 'Ma panthère'}<small>${!p.animal ? 'Viens l\'adopter !' : alerte && !p.animal.dort ? '📢 ' + echapper(alerte) : p.animal.dort ? 'Zzz… il dort' : '🐾 ' + (p.pattes || 0) + ' pattes'}</small></button>
     </div>`, { retour: true, profil: p });
   parler(bulle);
   $ecran.querySelectorAll('[data-porte]').forEach(b => b.onclick = () => {
@@ -156,6 +160,7 @@ function maison(p) {
     if (porte === 'defi') { if (defiFait) { son('faux'); b.classList.add('faux'); setTimeout(() => b.classList.remove('faux'), 400); } else aller(() => partie(p, null, jeuDefi(p))); }
     if (porte === 'salle') aller(() => salleDeJeux(p));
     if (porte === 'album') aller(() => album(p));
+    if (porte === 'animal') aller(() => ecranAnimal(p));
   });
 }
 
@@ -419,6 +424,7 @@ function partie(p, m, jeu) {
       p.scores[cle] = Math.max(avantEtoiles, nbEt);
     }
     p.etoiles += nbEt; p.pieces += pieces; p.tickets += tickets;
+    const pattes = gagnerPattes(p, reussies, nbEt, jeu.defi);
     p.xp += reussies * 10;
     const monte = niveauDe(p) > avantNiveau;
     if (monte) p.tickets += 1;
@@ -431,9 +437,11 @@ function partie(p, m, jeu) {
         <p>${msg}<br><small>${reussies} bonnes réponses du premier coup sur ${NOTEES}${meilleurCombo >= 3 ? ` · meilleure série 🔥 ${meilleurCombo}` : ''}</small></p>
         <div class="gains">
           <div class="gain">🪙 <b>+${pieces}</b></div>
+          ${pattes ? `<div class="gain">🐾 <b>+${pattes}</b></div>` : ''}
           ${tickets ? `<div class="gain">🎟️ <b>+${tickets}</b></div>` : ''}
           ${monte ? `<div class="gain niveau-up">🆙 Niveau ${niveauDe(p)} ! <b>+1 🎟️</b></div>` : ''}
         </div>
+        ${p.animal && reussies ? `<p class="astuce">${p.animal.espece === 'panda' ? '🐼' : '🐆'} ${echapper(p.animal.nom)} grandit : +${reussies * 10} XP</p>` : ''}
         ${!tickets && !jeu.defi ? '<p class="astuce">Avec 2 étoiles ⭐⭐, tu gagnes un ticket 🎟️ pour la salle de jeux !</p>' : ''}
         <div>
           ${jeu.defi ? '' : '<button class="bouton" id="rejouer">🔁 Rejouer</button>'}
@@ -610,10 +618,10 @@ function reglages() {
       <select id="limite" style="font-size:22px;padding:8px;border-radius:12px">
         ${[3, 5, 10, 20, 0].map(v => `<option value="${v}" ${v === donnees.limiteMiniJeux ? 'selected' : ''}>${v || 'Sans limite'}</option>`).join('')}
       </select>
-      <p style="font-size:16px;color:#7a7066">Les tickets 🎟️ se gagnent seulement en réussissant les exercices (2 étoiles ou plus, défi du jour, nouveau niveau).</p>
+      <p style="font-size:16px;color:#7a7066">Les tickets 🎟️ se gagnent seulement en réussissant les exercices (2 étoiles ou plus, défi du jour, nouveau niveau).<br>Les pattes 🐾 de la boutique de l'animal se gagnent seulement avec les exercices (2 par bonne réponse, 3 par étoile, 10 pour le défi).</p>
       <hr style="margin:30px 0">
       ${donnees.profils.map((p, i) => `
-        <h2>${p.avatar} Profil ${i + 1} · Niveau ${niveauDe(p)} · 🪙 ${p.pieces} · 🎟️ ${p.tickets}</h2>
+        <h2>${p.avatar} Profil ${i + 1} · Niveau ${niveauDe(p)} · 🪙 ${p.pieces} · 🎟️ ${p.tickets} · 🐾 ${p.pattes || 0}</h2>
         <label>Prénom</label><input data-i="${i}" data-k="nom" value="${echapper(p.nom)}">
         <label>Classe</label>
         <select data-i="${i}" data-k="niveau" style="font-size:22px;padding:8px;border-radius:12px">
