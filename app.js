@@ -204,6 +204,7 @@ function partie(p, m, jeu) {
   const deja = new Set();
   const seq = jeu.sequence ? jeu.sequence() : null; // leçon : questions dans un ordre fixé
   const TOTAL = seq ? seq.length : NB_QUESTIONS;
+  const NOTEES = seq ? seq.filter(q => q.type !== 'decouvrir').length : NB_QUESTIONS; // les cartes « nouveau mot » ne comptent pas
 
   function suivante() {
     if (n >= TOTAL) return fin();
@@ -213,7 +214,7 @@ function partie(p, m, jeu) {
     deja.add(cleQ(q));
     const mq = q.matiere || m;
     let premierEssai = true, erreurs = 0;
-    const zone = q.type === 'lettres' ? zoneLettres(q) : q.type === 'saisie' ? zoneSaisie() : q.type === 'parler' ? zoneParler() : `<div class="choix">${q.choix.map(c => `<button data-v="${echapper(c)}">${c}</button>`).join('')}</div>`;
+    const zone = q.type === 'lettres' ? zoneLettres(q) : q.type === 'saisie' ? zoneSaisie() : q.type === 'parler' ? zoneParler() : q.type === 'decouvrir' ? zoneDecouvrir() : `<div class="choix">${q.choix.map(c => `<button data-v="${echapper(c)}">${c}</button>`).join('')}</div>`;
     afficher(`${jeu.emoji} ${jeu.titre}`, `
       <div class="jeu">
         <div class="haut-jeu">
@@ -223,11 +224,13 @@ function partie(p, m, jeu) {
         <div class="question entre avec-maitresse">
           <div class="prof-coin">${dessinMaitresse(p.maitresse, 'normal')}<div class="bulle-prof"></div></div>
           ${jeu.defi ? `<div class="aide">${mq.emoji} ${mq.titre}</div>` : ''}
+          ${q.type === 'decouvrir' ? '<div class="nouveau-mot">✨ Nouveau mot</div>' : ''}
           <div class="visuel">${q.visuel || ''}</div>
-          <div class="enonce ${q.type === 'parler' ? 'mot-anglais' : ''}">${typo(q.enonce)}</div>
-          ${q.sens ? `<div class="aide">🇫🇷 ${echapper(q.sens)}</div>` : ''}
+          ${q.type === 'decouvrir' ? `<div class="mot-fr">🇫🇷 ${echapper(q.sens)}</div><div class="fleche-mot">⬇</div>` : ''}
+          <div class="enonce ${q.type === 'parler' || q.type === 'decouvrir' ? 'mot-anglais' : ''}">${q.type === 'decouvrir' ? '🇬🇧 ' : ''}${typo(q.enonce)}</div>
+          ${q.sens && q.type !== 'decouvrir' ? `<div class="aide">🇫🇷 ${echapper(q.sens)}</div>` : ''}
           ${q.aide ? `<div class="aide">${q.aide}</div>` : ''}
-          ${('speechSynthesis' in window) && q.type !== 'parler' ? '<button class="ecouter">🔊 Écouter</button>' : ''}
+          ${('speechSynthesis' in window) && q.type !== 'parler' && q.type !== 'decouvrir' ? '<button class="ecouter">🔊 Écouter</button>' : ''}
         </div>
         ${zone}
       </div>`, { retour: true, profil: p });
@@ -263,7 +266,11 @@ function partie(p, m, jeu) {
       if (el) { el.classList.remove('faux'); void el.offsetWidth; el.classList.add('faux'); }
     }
 
-    if (q.type === 'parler') {
+    if (q.type === 'decouvrir') {
+      const z = $ecran.querySelector('.decouvrir');
+      z.querySelector('.encore').onclick = () => lireQuestion(q, false);
+      z.querySelector('.compris').onclick = () => { taire(); son('tic'); n++; suivante(); };
+    } else if (q.type === 'parler') {
       const zoneP = $ecran.querySelector('.parler');
       const info = zoneP.querySelector('.info-micro');
       const micro = zoneP.querySelector('.micro');
@@ -348,13 +355,20 @@ function partie(p, m, jeu) {
         } else {
           rate();
           b.classList.add('faux'); b.disabled = true;
+          if (q.indice) {
+            // Leçon d'anglais : on montre la bonne réponse et on réécoute le mot.
+            const bon = [...$ecran.querySelectorAll('.choix button')].find(x => x.dataset.v === q.bonne);
+            if (bon) bon.classList.add('indice');
+            if (q.direEn) setTimeout(() => { taire(); parler(q.direEn, 'en-GB'); }, 900);
+          }
         }
       });
     }
   }
 
   function fin() {
-    const nbEt = reussies >= 9 ? 3 : reussies >= 6 ? 2 : reussies >= 3 ? 1 : 0;
+    const sur10 = reussies * 10 / NOTEES;
+    const nbEt = sur10 >= 9 ? 3 : sur10 >= 6 ? 2 : sur10 >= 3 ? 1 : 0;
     const avantNiveau = niveauDe(p), avantEtoiles = m ? (p.scores[`${m.id}/${jeu.id}`] || 0) : 0;
     let pieces = reussies + (nbEt === 3 ? 5 : 0) + (meilleurCombo >= 5 ? 3 : 0);
     let tickets = nbEt >= 2 ? 1 : 0;
@@ -374,7 +388,7 @@ function partie(p, m, jeu) {
       <div class="bravo">
         <div class="fin-maitresse">${dessinMaitresse(p.maitresse, nbEt ? 'contente' : 'encourage')}</div>
         <div class="gros">${nbEt ? [1, 2, 3].map(i => `<span class="etoile ${i <= nbEt ? 'pleine' : ''}" style="animation-delay:${i * .25}s">⭐</span>`).join('') : '💪'}</div>
-        <p>${msg}<br><small>${reussies} bonnes réponses du premier coup sur ${TOTAL}${meilleurCombo >= 3 ? ` · meilleure série 🔥 ${meilleurCombo}` : ''}</small></p>
+        <p>${msg}<br><small>${reussies} bonnes réponses du premier coup sur ${NOTEES}${meilleurCombo >= 3 ? ` · meilleure série 🔥 ${meilleurCombo}` : ''}</small></p>
         <div class="gains">
           <div class="gain">🪙 <b>+${pieces}</b></div>
           ${tickets ? `<div class="gain">🎟️ <b>+${tickets}</b></div>` : ''}
@@ -596,6 +610,9 @@ function zoneLettres(q) {
   const lettres = melange([...q.bonne]);
   return `<div class="mot">${[...q.bonne].map(() => '<span></span>').join('')}</div>
     <div class="tuiles">${lettres.map(l => `<button data-l="${echapper(l)}">${l}</button>`).join('')}</div>`;
+}
+function zoneDecouvrir() {
+  return `<div class="decouvrir boutons-parler"><button class="bouton violet encore">🔊 Encore</button><button class="bouton compris">J'ai compris ➜</button></div>`;
 }
 function zoneParler() {
   return `<div class="parler">

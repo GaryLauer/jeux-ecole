@@ -1,5 +1,5 @@
 // Cours d'anglais débutant : des leçons à débloquer une par une.
-// Chaque leçon = 5 mots à écouter et répéter au micro, puis 5 questions pour vérifier.
+// Chaque leçon = 5 mots : la maîtresse apprend chaque mot, l'enfant le répète au micro, puis un petit jeu avec ces mots.
 (() => {
   // [anglais, image, français, autres façons dont la reconnaissance vocale peut l'écrire]
   const LECONS = [
@@ -55,26 +55,29 @@
   function lecon(l, niveau, index) {
     return {
       id: 'lecon-' + (index + 1), titre: `Leçon ${index + 1} : ${l.titre}`, emoji: l.emoji,
-      gen: () => sequence()[0],
+      gen: () => sequence()[1],
       sequence
     };
     function sequence() {
       const mots = melange(l.mots).slice(0, 5);
-      const q = mots.map(([en, img, fr, acc]) => ({
-        type: 'parler', visuel: img, enonce: en, sens: fr, bonne: en, accepte: acc,
-        dire: 'Écoute bien, puis répète :', direEn: en
-      }));
+      // D'abord la maîtresse apprend chaque mot (sans question), puis l'enfant le répète au micro.
+      const apprendre = mots.flatMap(([en, img, fr, acc]) => [
+        { type: 'decouvrir', visuel: img, enonce: en, sens: fr, dire: `${fr}, en anglais, ça se dit :`, direEn: en },
+        { type: 'parler', visuel: img, enonce: en, sens: fr, bonne: en, accepte: acc, dire: 'À toi ! Répète après moi :', direEn: en }
+      ]);
+      // Puis un petit jeu, uniquement avec les mots qu'on vient d'apprendre.
+      const nbChoix = niveau === 'CP' ? 3 : 4;
       const quiz = melange(mots).map(([en, img, fr], i) => {
-        const autres = melange(l.mots.filter(m => m[0] !== en)).slice(0, 3);
+        const autres = melange(mots.filter(m => m[0] !== en)).slice(0, nbChoix - 1);
         if (niveau === 'CP' || i < 3) {
           // Écoute le mot anglais et touche la bonne image.
-          return { visuel: '🔊', enonce: 'Écoute et touche la bonne réponse', dire: 'Écoute, et touche la bonne réponse :', direEn: en,
+          return { visuel: '🔊', enonce: 'Écoute et touche la bonne image', dire: 'Écoute, et touche la bonne image :', direEn: en, indice: true,
             choix: melange([img, ...autres.map(m => m[1])]), bonne: img };
         }
         // CM1 : lis le mot français et choisis le mot anglais.
-        return { visuel: estImageEmoji(img) ? img : '🇬🇧', enonce: `Comment dit-on « ${fr} » en anglais ?`, choix: melange([en, ...autres.map(m => m[0])]), bonne: en };
+        return { visuel: estImageEmoji(img) ? img : '🇬🇧', enonce: `Comment dit-on « ${fr} » en anglais ?`, indice: true, choix: melange([en, ...autres.map(m => m[0])]), bonne: en };
       });
-      return [...q, ...quiz];
+      return [...apprendre, ...quiz];
     }
   }
 
