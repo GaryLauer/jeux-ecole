@@ -89,10 +89,13 @@ function majBourse(p) {
   document.getElementById('nbTickets').textContent = p.tickets;
   document.getElementById('nbPattes').textContent = p.pattes || 0;
 }
-function quitter() { if (nettoyage) { const f = nettoyage; nettoyage = null; f(); } taire(); }
+function quitter() { if (nettoyage) { const f = nettoyage; nettoyage = null; f(); } fermerCours(); taire(); }
 function aller(fn) { quitter(); pile.push(ecranActuel); ecranActuel = fn; fn(); }
 let ecranActuel = accueil;
-$retour.onclick = () => { quitter(); ecranActuel = pile.pop() || accueil; ecranActuel(); };
+$retour.onclick = () => {
+  if (document.querySelector('.cours-fenetre')) return fermerCours(); // retour d'Android : ferme d'abord le petit cours
+  quitter(); ecranActuel = pile.pop() || accueil; ecranActuel();
+};
 
 function accueil() {
   quitter();
@@ -203,7 +206,7 @@ function listeJeux(p, m) {
 function jeuDefi(p) {
   const tous = [];
   NIVEAUX[p.niveau].matieres.filter(m => !m.progressif).forEach(m => m.jeux.forEach(j => tous.push({ m, j })));
-  return { id: 'defi', titre: 'Défi du jour', emoji: '🎯', defi: true, gen: () => { const x = pioche(tous); const q = x.j.gen(); q.matiere = x.m; return q; } };
+  return { id: 'defi', titre: 'Défi du jour', emoji: '🎯', defi: true, gen: () => { const x = pioche(tous); const q = x.j.gen(); q.matiere = x.m; q.jeu = x.j; return q; } };
 }
 
 // Pour les jeux d'anglais : 2 fois (5 cartes « Nouveau mot », puis les 5 questions sur ces mots).
@@ -259,6 +262,7 @@ function partie(p, m, jeu) {
     deja.add(cleQ(q));
     const mq = q.matiere || m;
     let premierEssai = true, erreurs = 0;
+    const fiches = q.type === 'decouvrir' || q.type === 'parler' ? null : fichesCours(q, jeu, mq, p.niveau);
     const zone = q.type === 'lettres' ? zoneLettres(q) : q.type === 'saisie' ? zoneSaisie() : q.type === 'parler' ? zoneParler() : q.type === 'decouvrir' ? zoneDecouvrir() : `<div class="choix">${q.choix.map(c => `<button data-v="${echapper(c)}">${c}</button>`).join('')}</div>`;
     afficher(`${jeu.emoji} ${jeu.titre}`, `
       <div class="jeu">
@@ -267,6 +271,7 @@ function partie(p, m, jeu) {
           <div class="combo ${combo >= 2 ? 'visible' : ''}">🔥 ×${combo}</div>
         </div>
         <div class="question entre avec-maitresse">
+          ${fiches ? '<button class="aide-cours" aria-label="Petit cours : je ne comprends pas">?</button>' : ''}
           <div class="prof-coin">${dessinMaitresse(p.maitresse, 'normal')}<div class="bulle-prof"></div></div>
           ${jeu.defi ? `<div class="aide">${mq.emoji} ${mq.titre}</div>` : ''}
           ${q.type === 'decouvrir' ? `<div class="nouveau-mot">✨ ${/\s/.test(q.enonce.trim()) ? 'J\'apprends' : 'Nouveau mot'}</div>` : ''}
@@ -279,6 +284,8 @@ function partie(p, m, jeu) {
         </div>
         ${zone}
       </div>`, { retour: true, profil: p });
+    const bc = $ecran.querySelector('.aide-cours');
+    if (bc) bc.onclick = () => { son('tic'); ouvrirCours(p, fiches, lecture); };
     const ec = $ecran.querySelector('.ecouter');
     if (ec) ec.onclick = () => lireQuestion(q, !(lecture && mq.id === 'francais'));
     if (lecture || q.direEn || q.type === 'saisie') setTimeout(() => lireQuestion(q, false), 250);
