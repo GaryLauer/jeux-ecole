@@ -933,6 +933,45 @@
     { q: 'Tu n\'es pas d\'accord avec un camarade. Que fais-tu ?', v: '🤝', b: 'J\'en discute calmement', f: ['Je le frappe', 'Je l\'insulte', 'Je casse ses affaires'] },
     { q: 'Pour traverser la rue en sécurité, on passe…', v: '🚸', b: 'sur le passage piéton, quand le feu piéton est vert', f: ['entre les voitures garées', 'quand le feu piéton est rouge', 'en courant derrière un bus'] }
   ];
+  // Sciences : le cerveau et le système nerveux (le corps humain, cycle 3).
+  // La leçon commence par des cartes « J'apprends », puis 10 questions.
+  const CERVEAU_LECON = [
+    ['🧠', 'Le cerveau est dans la tête, bien protégé par un os dur : le crâne. C\'est lui qui commande tout le corps.', 'Le cerveau est le chef du corps'],
+    ['👀', 'Nos 5 sens (la vue, l\'ouïe, l\'odorat, le goût et le toucher) captent ce qui se passe autour de nous. Les nerfs portent ces informations jusqu\'au cerveau.', 'Les sens informent le cerveau'],
+    ['💪', 'Le cerveau réfléchit et décide. Il envoie alors un message par les nerfs jusqu\'aux muscles, qui font bouger le corps.', 'Le cerveau commande les muscles'],
+    ['🦴', 'La moelle épinière est un gros cordon de nerfs, à l\'abri dans la colonne vertébrale. Elle relie le cerveau au reste du corps. Quand on touche quelque chose de brûlant, elle fait retirer la main tout de suite, sans qu\'on ait besoin de réfléchir : c\'est un réflexe.', 'Nerfs et moelle épinière transportent les messages'],
+    ['😴', 'Même quand on dort, le cerveau travaille : il range ce qu\'on a appris. Pour bien marcher, il a besoin de dormir (environ 10 heures à ton âge), de bien manger, de bouger, et de moins d\'écrans le soir. À vélo, le casque le protège.', 'Je prends soin de mon cerveau']
+  ];
+  const CERVEAU = [
+    { q: 'Quel organe commande tout notre corps ?', v: '👑', b: 'Le cerveau', f: ['Le cœur', 'L\'estomac', 'Les poumons'] },
+    { q: 'Quel os protège le cerveau ?', v: '🧠', b: 'Le crâne', f: ['Le fémur', 'Les côtes', 'Le bassin'] },
+    { q: 'Par quoi les messages voyagent-ils entre le corps et le cerveau ?', v: '⚡', b: 'Par les nerfs', f: ['Par les os', 'Par les veines', 'Par l\'estomac'] },
+    { q: 'Combien avons-nous de sens ?', v: '🖐️', b: '5', f: ['3', '4', '10'] },
+    { q: 'Avec quel organe des sens sent-on les odeurs ?', v: '🌸', b: 'Le nez', f: ['Les yeux', 'Les oreilles', 'La langue'] },
+    { q: 'Quel organe des sens permet de sentir le chaud, le froid et le doux ?', v: '🧸', b: 'La peau', f: ['Le nez', 'Les oreilles', 'Les yeux'] },
+    { q: 'Le sens de l\'ouïe, c\'est…', v: '🎵', b: 'entendre', f: ['voir', 'goûter', 'sentir les odeurs'] },
+    { q: 'Tu vois un ballon arriver. Quel est le bon trajet du message ?', v: '⚽', b: 'Yeux → nerf → cerveau → nerf → muscles', f: ['Muscles → cerveau → yeux', 'Cerveau → yeux → muscles', 'Yeux → muscles, sans passer par le cerveau'] },
+    { q: 'Qui fait bouger ton bras quand le cerveau le décide ?', v: '💪', b: 'Les muscles', f: ['Les poumons', 'Les cheveux', 'Le cœur'] },
+    { q: 'Comment s\'appelle le cordon de nerfs caché dans la colonne vertébrale ?', v: '🦴', b: 'La moelle épinière', f: ['La trachée', 'L\'intestin', 'Le crâne'] },
+    { q: 'Quelle partie du squelette protège la moelle épinière ?', v: '🦴', b: 'La colonne vertébrale', f: ['Le crâne', 'Les côtes', 'Le bras'] },
+    { q: 'Tu touches une casserole brûlante et tu retires ta main sans réfléchir. C\'est…', v: '🔥', b: 'un réflexe', f: ['un rêve', 'une maladie', 'une habitude'] },
+    { q: 'Où se trouve le cerveau ?', v: '🧍', b: 'Dans la tête', f: ['Dans le ventre', 'Dans la poitrine', 'Dans le dos'] },
+    { q: 'Environ combien d\'heures un enfant de ton âge doit-il dormir chaque nuit ?', v: '😴', b: 'Environ 10 heures', f: ['Environ 4 heures', 'Environ 6 heures', 'Environ 18 heures'] },
+    { q: 'Pourquoi faut-il bien dormir ?', v: '🛏️', b: 'Pour que le cerveau se repose et retienne ce qu\'on a appris', f: ['Pour que les cheveux poussent', 'Ça ne sert à rien', 'Pour avoir faim'] },
+    { q: 'Pourquoi porte-t-on un casque à vélo ?', v: '🚲', b: 'Pour protéger la tête et le cerveau en cas de chute', f: ['Pour aller plus vite', 'Pour avoir chaud', 'Pour mieux entendre'] },
+    { q: 'Que vaut-il mieux éviter le soir avant de dormir ?', v: '🌙', b: 'Les écrans', f: ['Lire un livre', 'Se brosser les dents', 'Faire un câlin'] },
+    { q: 'Qu\'est-ce qui aide le cerveau à bien marcher ?', v: '🥦', b: 'Dormir, bien manger et bouger', f: ['Sauter le petit-déjeuner', 'Se coucher très tard', 'Rester devant les écrans'] },
+    { q: 'Le cerveau travaille-t-il pendant qu\'on dort ?', v: '💤', b: 'Oui, il ne s\'arrête jamais', f: ['Non, il s\'éteint', 'Seulement le week-end', 'Seulement quand on rêve'] },
+    { q: 'Quand tu entends ton prénom et que tu te retournes, qui a compris le son ?', v: '👂', b: 'Le cerveau', f: ['L\'oreille toute seule', 'Le cou', 'Les pieds'] }
+  ];
+  const genCerveau = depuisListe(CERVEAU);
+  ajouterJeux('CM1', 'sciences', [
+    { id: 'quiz-cerveau', titre: 'Le cerveau et les nerfs', emoji: '🧠', gen: genCerveau,
+      sequence: () => [
+        ...CERVEAU_LECON.map(([v, texte, titre]) => ({ type: 'decouvrir', visuel: v, avant: texte, enonce: titre, dire: texte })),
+        ...melange(CERVEAU).slice(0, 10).map(it => qcm({ visuel: it.v || '', enonce: it.q, dire: it.q }, it.b, it.f))
+      ] }
+  ]);
   ajouterMatiere('CM1', {
     id: 'emc', titre: 'Vivre ensemble', emoji: '🤝', couleur: '#d94f9c', jeux: [
       { id: 'quiz-emc', titre: 'Quiz citoyen', emoji: '🇫🇷', gen: depuisListe(EMC) }

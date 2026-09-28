@@ -663,6 +663,30 @@ cours('CM1/sciences/quiz-sciences',
     'Le vent fait tourner les éoliennes : c\'est une énergie renouvelable. Éteindre la lumière économise l\'énergie.',
     'Le papier vient du bois, le verre du sable, la plupart des plastiques du pétrole.'
   ] });
+cours('CM1/sciences/quiz-cerveau',
+  { t: 'Le chef du corps', si: /commande|organe|trouve|compris|os protège|crâne/i, l: [
+    'Tout en haut du corps, dans la tête, un organe dirige tout : il reçoit les informations, réfléchit, décide et donne des ordres.',
+    'Il est mou et fragile, alors un os dur et arrondi l\'entoure comme un casque.',
+    'Les oreilles, les yeux, la peau ne font que capter : c\'est dans la tête que tout est compris.',
+    'Il pèse environ 1,4 kg chez un adulte, et il est formé de milliards de cellules, les neurones.'
+  ] },
+  { t: 'Les 5 sens', si: /sens|odeurs|ouïe|chaud|nez|peau/i, l: [
+    'La vue : les yeux. L\'ouïe : les oreilles. L\'odorat : le nez. Le goût : la langue. Le toucher : la peau.',
+    'Chaque organe des sens capte des informations : lumière, sons, odeurs, saveurs, chaleur, douleur…',
+    'Exemple : la langue reconnaît le sucré et le salé ; les oreilles captent la musique.'
+  ] },
+  { t: 'Le trajet des messages', si: /message|trajet|nerf|bouger|muscles|moelle|colonne|réflexe|brûlante/i, l: [
+    'Les nerfs sont comme des fils : ils transportent des messages très vite dans tout le corps.',
+    'Exemple : la sonnerie retentit. L\'oreille capte le son, un nerf porte l\'information au cerveau, le cerveau décide de se lever, un nerf porte l\'ordre aux muscles des jambes.',
+    'La moelle épinière, un gros cordon de nerfs, descend dans le dos, à l\'abri dans la colonne vertébrale.',
+    'Devant un danger (piqûre, brûlure), la moelle épinière fait bouger le corps tout de suite, sans attendre qu\'on réfléchisse : c\'est un réflexe.'
+  ] },
+  { t: 'Prendre soin de son cerveau', si: /dormir|dort|heures|casque|écrans|soir|aide/i, l: [
+    'Le sommeil repose le cerveau et l\'aide à ranger ce qu\'on a appris. À 9 ou 10 ans, il faut environ 10 heures de sommeil.',
+    'Bien manger (avec un petit-déjeuner), bouger et jouer dehors aident aussi le cerveau.',
+    'Les écrans le soir retardent l\'endormissement : mieux vaut lire une histoire.',
+    'À vélo, à trottinette ou en rollers, le casque protège la tête en cas de chute.'
+  ] });
 cours('CM1/emc/quiz-emc',
   { t: 'Les symboles de la République', si: /drapeau|Marianne|devise|Marseillaise|hymne|fête nationale|Bastille|Rouget|Fraternité/i, l: [
     'Le drapeau est bleu, blanc, rouge. Marianne représente la République.',
