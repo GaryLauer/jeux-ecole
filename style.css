@@ -24,6 +24,7 @@ header {
 header h1 { flex: 1; margin: 0; font-size: clamp(20px, 4vw, 30px); }
 #bourse { display: flex; gap: 10px; font-size: 22px; } #bourse[hidden] { display: none; } #bourse span { background: rgba(255,255,255,.25); padding: 6px 12px; border-radius: 30px; white-space: nowrap; }
 button { font-family: inherit; cursor: pointer; border: none; }
+#version { text-align: center; font-size: 12px; color: #b9a58c; padding: 0 0 10px; }
 .rond.maj { background: #2ecc71; color: #fff; animation: appel 1.6s ease-in-out infinite; }
 .rond.maj.tourne { animation: tourne 0.8s linear infinite; }
 @keyframes appel { 50% { transform: scale(1.12); } }
