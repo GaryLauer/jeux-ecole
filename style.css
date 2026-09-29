@@ -454,3 +454,45 @@ body.parle .maitresse-svg .bouche { animation: parle .22s ease-in-out infinite a
 .loup-carrefour button span { font-size: 38px; }
 .loup-carrefour button b { font-size: clamp(18px, 3.6vw, 26px); }
 .loup-carrefour button small { font-size: clamp(14px, 2.8vw, 18px); }
+
+/* ---------- Cours journalier ---------- */
+.portes .tuile.journalier { grid-column: 1 / -1; min-height: 130px; font-size: clamp(22px, 4vw, 30px); }
+.tuile.journalier.fait-jour { filter: saturate(.75); }
+.carte-jour, .cadeau-semaine, .comment-ca-marche { background: #fff; border-radius: 24px; box-shadow: 0 6px 0 rgba(0,0,0,.08); padding: 14px 18px; margin: 16px auto; max-width: 760px; }
+.carte-jour h2, .cadeau-semaine h2 { margin: 4px 0 8px; font-size: clamp(20px, 3.6vw, 26px); text-align: center; }
+.carte-jour ul { font-size: 20px; line-height: 1.5; margin: 6px 0 10px; }
+.gros-bouton { font-size: 24px; padding: 16px 28px; animation: brille 1.6s ease-in-out infinite; }
+.cadeau-semaine { background: linear-gradient(160deg, #fff7d6, #ffe8f3); border: 3px solid #ffd23f; }
+.cadeau-semaine h3 { text-align: center; margin: 14px 0 6px; font-size: 20px; }
+.cadeau-contenu { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; text-align: center; font-size: 18px; }
+.cadeau-contenu p { margin: 6px 0; }
+.cadeau-dessin { width: 190px; height: 215px; }
+.cadeau-dessin svg { width: 100%; height: 100%; }
+.cadeau-dessin.grand { width: 240px; height: 270px; margin: 0 auto; }
+.cadeau-ic { font-size: 110px; line-height: 200px; }
+.cadeau-nom { font-size: 22px; font-weight: bold; color: #8e5cd9; }
+.cadeau-nom small { font-size: 15px; color: #7a7066; font-weight: normal; }
+.cadeau-pattes { font-size: 26px; font-weight: bold; color: #d9480f; }
+.frise-semaine { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.jour-semaine { background: #fff; border-radius: 14px; padding: 6px 2px; text-align: center; display: flex; flex-direction: column; font-size: 15px; border: 3px solid #eadcc5; }
+.jour-semaine b { text-transform: capitalize; }
+.jour-semaine span { font-size: 24px; }
+.jour-semaine.fait { border-color: #3bb273; }
+.jour-semaine.oublie { border-color: #e5484d; }
+.jour-semaine.aujourdhui { border-color: #ff8a3d; animation: brille 1.6s ease-in-out infinite; }
+.comment-ca-marche summary { font-size: 20px; font-weight: bold; cursor: pointer; }
+.comment-ca-marche ol { font-size: 18px; line-height: 1.45; padding-left: 24px; }
+.comment-ca-marche li { margin: 6px 0; }
+.lecon-jour { max-width: 760px; margin: 0 auto; font-size: 20px; }
+.titre-notion { font-size: clamp(20px, 3.6vw, 26px); margin: 18px 0 4px; }
+.note-jour { font-size: 84px; font-weight: bold; color: #4f8ef7; line-height: 1; margin: 8px 0; }
+.note-jour small { font-size: 36px; color: #7a7066; }
+.note-jour.top { color: #3bb273; }
+.parent-journalier { background: #fff7e6; border-radius: 18px; padding: 10px 16px; margin: 18px 0; }
+.parent-journalier h3 { margin: 6px 0; }
+.note-parent { font-size: 16px; color: #7a7066; }
+.notions-matiere { margin: 8px 0; font-size: 19px; }
+.notions-matiere summary { cursor: pointer; font-weight: bold; padding: 6px 0; }
+.parent .case { display: flex; align-items: center; gap: 10px; font-size: 18px; margin: 6px 0 6px 12px; }
+.parent .case input { width: 26px; height: 26px; flex: none; }
+@media (max-width: 480px) { .jour-semaine { font-size: 12px; } .jour-semaine span { font-size: 18px; } .cadeau-dessin { width: 150px; height: 170px; } }

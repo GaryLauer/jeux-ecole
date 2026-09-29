@@ -120,6 +120,12 @@ const CATALOGUE = [
   { id: 'sac', cat: 'habits', slot: 'dos', nom: 'Sac à dos', ic: '🎒', durable: true, prix: 90 },
   { id: 'cape', cat: 'habits', slot: 'dos', nom: 'Cape de super-héros', ic: '🦸', durable: true, prix: 150 },
   { id: 'ailes', cat: 'habits', slot: 'dos', nom: 'Ailes de fée', ic: '🧚', durable: true, prix: 210, min: 'enfant' },
+  // Cadeaux du cours journalier : on ne les trouve pas à la boutique, on les gagne avec une très bonne note de la semaine.
+  { id: 'diademe', cat: 'habits', slot: 'tete', nom: 'Diadème des étoiles', ic: '👑', badge: '⭐', durable: true, exclusif: true, prix: 0, desc: 'Cadeau du cours journalier.' },
+  { id: 'cape-etoiles', cat: 'habits', slot: 'dos', nom: 'Cape étoilée de championne', ic: '🦸', badge: '⭐', durable: true, exclusif: true, prix: 0, desc: 'Cadeau du cours journalier.' },
+  { id: 'collier-etoile', cat: 'habits', slot: 'cou', nom: 'Collier étoile d\'or', ic: '⭐', durable: true, exclusif: true, prix: 0, desc: 'Cadeau du cours journalier.' },
+  { id: 'ailes-or', cat: 'habits', slot: 'dos', nom: 'Ailes dorées', ic: '✨', durable: true, exclusif: true, prix: 0, desc: 'Cadeau du cours journalier.' },
+  { id: 'lunettes-diamant', cat: 'habits', slot: 'yeux', nom: 'Lunettes diamant', ic: '💎', durable: true, exclusif: true, prix: 0, desc: 'Cadeau du cours journalier.' },
   { id: 'chaussons', cat: 'habits', slot: 'pieds', nom: 'Chaussons', ic: '🥿', durable: true, prix: 60 },
   { id: 'bottes', cat: 'habits', slot: 'pieds', nom: 'Bottes de pluie', ic: '👢', durable: true, prix: 75 },
   { id: 'baskets', cat: 'habits', slot: 'pieds', nom: 'Baskets', ic: '👟', durable: true, prix: 90 },
@@ -883,7 +889,7 @@ function conseilBoutique(a) {
 }
 function afficherRayon(p) {
   const a = p.animal;
-  const liste = CATALOGUE.filter(it => it.cat === rayonBoutique);
+  const liste = CATALOGUE.filter(it => it.cat === rayonBoutique && (!it.exclusif || a.possede[it.id])); // les cadeaux ne s'achètent pas
   const zone = document.getElementById('rayon');
   let html = '';
   if (rayonBoutique === 'habits') {

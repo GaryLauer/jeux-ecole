@@ -14,3 +14,5 @@ Classes : CP, CE1, CE2, CM1, CM2 (contenu dans jeux.js, cp-plus.js, cm1-plus.js,
 Vérifier le contenu : `node outils/verifier.js` (ou `node outils/verifier.js CE2` pour une seule classe).
 
 Multiplication rapide (loup.js) : en maths du CE2, CM1 et CM2, une course contre le loup avec les tables de 0 à 10. Carrefours : à gauche tables de 0 à 3, au centre de 4 à 7, à droite de 7 à 10. Vitesse 1x à 5x choisie avant la partie ; les gains sont multipliés par la vitesse (la moitié si le loup croque l'enfant).
+
+Cours journalier (journalier.js) : les parents cochent dans l'espace parents les notions vues en classe (par date). Tant que le cours du jour n'est pas fait, le reste de l'appli est fermé. Du lundi au vendredi, un jour sans nouvelle notion devient une révision de la semaine. Chaque cours est noté sur 20 (la première fois de la journée compte, un jour oublié = 0). Le vendredi, la moyenne donne la note de la semaine : 16/20 ou plus → un habit exclusif pour l'animal (un nouveau chaque semaine) + 150 pattes.

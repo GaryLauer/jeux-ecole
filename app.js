@@ -40,6 +40,8 @@ function charger() {
   d.profils = d.profils.map(p => ({ ...nouveauProfil(p.id, p.nom, p.niveau, p.avatar), ...p }));
   d.profils.forEach(p => { if (p.nom === 'Mon grand') p.nom = 'Ma grande'; if (p.nom === 'Mon petit') p.nom = 'Ma petite'; });
   if (d.limiteMiniJeux === undefined) d.limiteMiniJeux = 5;
+  premiereGraine(d.profils);
+  d.profils.forEach(initJournalier);
   return d;
 }
 function sauver() { try { localStorage.setItem(CLE, JSON.stringify(donnees)); } catch (e) {} }
@@ -123,7 +125,7 @@ function accueil() {
     <div class="grille">
       ${donnees.profils.map((p, i) => `
         <button class="tuile profil" style="--c:${COULEUR_CLASSE[p.niveau] || '#4f8ef7'}" data-i="${i}">
-          <span class="emoji rebond">${p.avatar}</span>${echapper(p.nom)}<small>${p.niveau} · Niveau ${niveauDe(p)} · 🪙 ${p.pieces}</small>
+          <span class="emoji rebond">${p.avatar}</span>${echapper(p.nom)}<small>${p.niveau} · Niveau ${niveauDe(p)} · 🪙 ${p.pieces}${coursObligatoire(p) ? '<br>📝 Cours du jour à faire' : ''}</small>
         </button>`).join('')}
     </div>
     <button class="lien" id="parents">Espace parents</button>`);
@@ -133,6 +135,9 @@ function accueil() {
 
 // L'écran d'accueil d'un enfant : sa mascotte, son niveau, et les 4 grandes portes.
 function maison(p) {
+  // Fin de semaine : la maîtresse annonce d'abord la note de la semaine.
+  const aAnnoncer = cloturerSemaines(p);
+  if (aAnnoncer.length) return bilanSemaine(p, aAnnoncer[0], () => maison(p));
   const jour = aujourdhui();
   if (p.serie.jour !== jour) {
     const hier = new Date(Date.now() - 864e5);
@@ -148,7 +153,11 @@ function maison(p) {
   const mt = MAITRESSES[p.maitresse];
   const alerte = alerteAnimal(p);
   const panda = p.espece === 'panda';
-  const bulle = alerte && !p.animal.dort ? `${p.animal.nom} t'appelle : « ${alerte.replace(/\s*\p{Extended_Pictographic}\uFE0F?/gu, '')} »` : !p.animal && Math.random() < 0.5 ? `Un bébé t'attend dans la maison des animaux ! Va vite l'adopter.` : pioche([
+  // Cours journalier : tant qu'il n'est pas fait, tout le reste est fermé.
+  const duJour = notionsDuJour(p), aFaire = coursObligatoire(p), semaine = etatSemaine(p);
+  const faitJour = initJournalier(p).jours[isoJour()];
+  const phraseTravail = `D'abord, ton cours journalier ! Tu dois travailler tes exercices avant de faire ce que tu veux. Après, tout sera ouvert.`;
+  const bulle = aFaire ? `Coucou ${echapper(p.nom)} ! ${phraseTravail}` : alerte && !p.animal.dort ? `${p.animal.nom} t'appelle : « ${alerte.replace(/\s*\p{Extended_Pictographic}\uFE0F?/gu, '')} »` : !p.animal && Math.random() < 0.5 ? `Un bébé t'attend dans la maison des animaux ! Va vite l'adopter.` : pioche([
     pioche(mt.salut),
     `Coucou ${echapper(p.nom)} ! C'est moi, ${mt.nom}.`,
     p.tickets ? `Tu as ${p.tickets} ticket${p.tickets > 1 ? 's' : ''} pour la salle de jeux !` : 'Gagne 2 étoiles dans un jeu pour avoir un ticket !',
@@ -166,6 +175,7 @@ function maison(p) {
       <span>${p.serie.n > 1 ? `🔥 ${p.serie.n} jours de suite` : '🔥 1er jour'}</span>
     </div>
     <div class="grille portes">
+      ${duJour || semaine.prevue ? `<button class="tuile journalier ${aFaire ? 'brille' : 'fait-jour'}" style="--c:#ff8a3d" data-porte="journalier"><span class="emoji">📝</span>Cours journalier<small>${aFaire ? (duJour.revision ? 'Révision de la semaine à faire' : 'À faire avant tout le reste !') : faitJour && !faitJour.dispense ? `✅ Fait : ${faitJour.note}/20` : 'Pas de cours aujourd\'hui'}${semaine.note !== null ? ` · semaine : ${noteFr(semaine.note)}/20` : ''} · 🎁 le cadeau</small></button>` : ''}
       <button class="tuile" style="--c:#4f8ef7" data-porte="apprendre"><span class="emoji">📚</span>Apprendre<small>Gagne des pièces 🪙 et des pattes 🐾</small></button>
       <button class="tuile ${defiFait ? 'fait' : 'brille'}" style="--c:#e5484d" data-porte="defi"><span class="emoji">🎯</span>Défi du jour<small>${defiFait ? 'Réussi ! Reviens demain' : '+2 🎟️ et +20 🪙'}</small></button>
       <button class="tuile" style="--c:#8e5cd9" data-porte="salle"><span class="emoji">🎮</span>Salle de jeux<small>${p.tickets} 🎟️</small></button>
@@ -173,8 +183,21 @@ function maison(p) {
       <button class="tuile ${alerte || !p.animal ? 'brille' : ''}" style="--c:${panda ? '#3a3a48' : '#233270'}" data-porte="animal"><span class="emoji">${panda ? '🐼' : '🐆'}</span>${p.animal ? echapper(p.animal.nom) : panda ? 'Mon panda' : 'Ma panthère'}<small>${!p.animal ? 'Viens l\'adopter !' : alerte && !p.animal.dort ? '📢 ' + echapper(alerte) : p.animal.dort ? 'Zzz… il dort' : '🐾 ' + (p.pattes || 0) + ' pattes'}</small></button>
     </div>`, { retour: true, profil: p });
   parler(bulle);
+  if (aFaire) $ecran.querySelectorAll('[data-porte]:not([data-porte="journalier"])').forEach(b => {
+    b.classList.add('verrou'); b.classList.remove('brille');
+    b.querySelector('.emoji').textContent = '🔒';
+    b.querySelector('small').textContent = 'Après ton cours journalier';
+  });
   $ecran.querySelectorAll('[data-porte]').forEach(b => b.onclick = () => {
     const porte = b.dataset.porte;
+    if (porte === 'journalier') return aller(() => ecranJournalier(p));
+    if (coursObligatoire(p)) {
+      son('faux'); b.classList.remove('faux'); void b.offsetWidth; b.classList.add('faux');
+      const bu = $ecran.querySelector('.mascotte .bulle');
+      if (bu) bu.innerHTML = `<b>${mt.nom}</b><br>${typo(phraseTravail)}`;
+      taire(); parler(phraseTravail);
+      return;
+    }
     if (porte === 'apprendre') aller(() => matieres(p));
     if (porte === 'defi') { if (defiFait) { son('faux'); b.classList.add('faux'); setTimeout(() => b.classList.remove('faux'), 400); } else aller(() => partie(p, null, jeuDefi(p))); }
     if (porte === 'salle') aller(() => salleDeJeux(p));
@@ -330,7 +353,7 @@ function partie(p, m, jeu) {
     deja.add(cleQ(q));
     const mq = q.matiere || m;
     let premierEssai = true, erreurs = 0;
-    const fiches = q.type === 'decouvrir' || q.type === 'parler' ? null : fichesCours(q, jeu, mq, p.niveau);
+    const fiches = q.type === 'decouvrir' || q.type === 'parler' ? null : fichesCours(q, jeu, mq, q.niveau || p.niveau);
     const zone = q.type === 'lettres' ? zoneLettres(q) : q.type === 'saisie' ? zoneSaisie() : q.type === 'parler' ? zoneParler() : q.type === 'decouvrir' ? zoneDecouvrir() : `<div class="choix">${q.choix.map(c => `<button data-v="${echapper(c)}">${c}</button>`).join('')}</div>`;
     afficher(`${jeu.emoji} ${jeu.titre}`, `
       <div class="jeu">
@@ -491,7 +514,7 @@ function partie(p, m, jeu) {
     const nbEt = sur10 >= 9 ? 3 : sur10 >= 6 ? 2 : sur10 >= 3 ? 1 : 0;
     const avantNiveau = niveauDe(p), avantEtoiles = m ? (p.scores[cleScore(p, m, jeu)] || 0) : 0;
     // Classe choisie trop basse (2 ans ou plus sous la vraie classe) : rien n'est gagné ni enregistré.
-    const bloque = sansPoints(p) && !(m && m.parcours); // le parcours d'anglais ne dépend pas de la classe
+    const bloque = sansPoints(p) && !(m && m.parcours) && !jeu.journalier; // cours journalier : notions de sa vraie classe // le parcours d'anglais ne dépend pas de la classe
     // Évaluation d'anglais : 8 sur 10 pour réussir le palier et ouvrir le suivant.
     const evalOk = jeu.evaluation && reussies >= Math.ceil(PARCOURS_EN.seuil * NOTEES);
     let pieces = 0, tickets = 0, pattes = 0;
@@ -511,6 +534,7 @@ function partie(p, m, jeu) {
     const monte = niveauDe(p) > avantNiveau;
     if (monte) p.tickets += 1;
     sauver();
+    if (jeu.journalier) return finJournalier(p, jeu, reussies, NOTEES, { pieces, pattes, tickets: tickets + (monte ? 1 : 0) });
     const msg = jeu.evaluation ? (evalOk ? 'Bravo, palier réussi ! Le palier suivant est ouvert.' : `Il faut ${Math.ceil(PARCOURS_EN.seuil * NOTEES)} bonnes réponses sur ${NOTEES}. Refais les leçons, puis réessaie !`) : bloque ? `Bien entraîné ! Mais en ${p.niveau}, c'est trop loin de ta classe : tu ne gagnes pas de points.` : jeu.defi && nbEt === 0 ? 'Presque ! Il faut 3 bonnes réponses pour réussir le défi.' : nbEt === 3 ? 'Bravo, c\'est parfait !' : nbEt === 2 ? 'Très bien joué !' : nbEt === 1 ? 'C\'est bien, continue !' : 'On réessaie ensemble ?';
     afficher(`${jeu.emoji} ${jeu.titre}`, `
       <div class="bravo">
@@ -720,6 +744,7 @@ function reglages() {
         </select>
         <label>Avatar</label>
         <div>${AVATARS.map(av => `<button class="rond" style="margin:4px;${av === p.avatar ? 'outline:4px solid #ff8a3d' : ''}" data-i="${i}" data-av="${av}">${av}</button>`).join('')}</div>
+        ${reglagesJournalier(p, i)}
         <table><tr><th>Jeu</th><th>Meilleur score</th></tr>
           ${Object.entries(p.scores).map(([k, s]) => `<tr><td>${nomJeu(k)}</td><td>${'⭐'.repeat(s) || '–'}</td></tr>`).join('') || '<tr><td colspan="2">Pas encore de partie jouée.</td></tr>'}
         </table>`).join('<hr style="margin:30px 0">')}
@@ -728,6 +753,7 @@ function reglages() {
   document.getElementById('limite').onchange = e => { donnees.limiteMiniJeux = parseInt(e.target.value, 10); sauver(); };
   $ecran.querySelectorAll('input[data-i],select[data-i]').forEach(el => el.onchange = () => { donnees.profils[el.dataset.i][el.dataset.k] = el.value.trim() || donnees.profils[el.dataset.i][el.dataset.k]; sauver(); if (el.dataset.k === 'classeReelle') reglages(); });
   $ecran.querySelectorAll('[data-av]').forEach(b => b.onclick = () => { donnees.profils[b.dataset.i].avatar = b.dataset.av; sauver(); reglages(); });
+  lierReglagesJournalier(() => { const y = window.scrollY; reglages(); window.scrollTo(0, y); });
   document.getElementById('fini').onclick = accueil;
 }
 
