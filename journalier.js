@@ -67,6 +67,143 @@
     ], ex: 'bâtir : je bâtis, tu bâtis, il bâtit,<br>nous bâtissons, vous bâtissez, ils bâtissent' });
 })();
 
+/* ======================= Nouveaux jeux CM1 du 1er octobre ======================= */
+(function () {
+  const gros = t => `<b style="font-size:1.5em">${t}</b>`;
+  const NOMS_PARTS = { 2: 'demis', 3: 'tiers', 4: 'quarts', 5: 'cinquièmes', 6: 'sixièmes', 8: 'huitièmes', 10: 'dixièmes' };
+  const nomPart = (d, k) => k > 1 ? NOMS_PARTS[d] : { 2: 'demi', 3: 'tiers', 4: 'quart', 5: 'cinquième', 6: 'sixième', 8: 'huitième', 10: 'dixième' }[d];
+
+  // ---- Maths : les fractions plus grandes que 1 (4/3 = 4 × 1/3 = 3/3 + 1/3 = 1 + 1/3)
+  const fractionSup1 = () => {
+    const d = pioche([2, 3, 4, 5, 6, 8, 10]), e = Math.random() < 0.7 ? 1 : 2, r = alea(1, d - 1);
+    return { d, e, r, n: e * d + r };
+  };
+  const genFractionsSup1 = () => {
+    const t = alea(0, 5), { d, e, r, n } = fractionSup1();
+    if (t === 0) return qcm({ visuel: gros(`${n}/${d}`), enonce: `Complète : ${n}/${d} = ${e} + ?`, aide: `${d}/${d} = 1` }, `${r}/${d}`, [`${r + 1}/${d}`, `${n}/${d}`, `${d}/${r}`, `${r}/${n}`, `${n - d}/${d + 1}`].filter(x => x !== `${r}/${d}`));
+    if (t === 1) return qcm({ visuel: '✍️', enonce: `Écris ${e} + ${r}/${d} avec une seule fraction.` }, `${n}/${d}`, [`${e + r}/${d}`, `${r}/${d}`, `${n}/${d * 2}`, `${e}${r}/${d}`, `${n + 1}/${d}`]);
+    if (t === 2) return qcm({ visuel: gros(`${n}/${d}`), enonce: `${n}/${d} = ${n} × ?` }, `1/${d}`, [`1/${n}`, `${d}/${n}`, `${n}/${d}`, `${d}/1`]);
+    if (t === 3) return qcm({ visuel: '🍫', enonce: `Combien de ${NOMS_PARTS[d]} faut-il pour faire ${e === 1 ? '1 unité' : e + ' unités'} ?` }, e * d, [e * d + 1, d, e * d - 1, e + d, 10].filter(x => x > 0));
+    if (t === 4) {
+      const bon = `entre ${e} et ${e + 1}`;
+      return { visuel: gros(`${n}/${d}`), enonce: `Entre quels nombres entiers se trouve ${n}/${d} ?`, aide: 'Cherche combien d\'unités entières il y a dedans.', choix: ['entre 0 et 1', 'entre 1 et 2', 'entre 2 et 3', 'entre 3 et 4'], bonne: bon };
+    }
+    // Une figure : des unités coupées en parts égales
+    const unite = k => '🟧'.repeat(k) + '⬜'.repeat(d - k);
+    const vis = [...Array(e)].map(() => unite(d)).concat(unite(r)).join('<br>');
+    return qcm({ visuel: `<span style="font-size:.55em;line-height:1.3">${vis}</span>`, enonce: `Chaque ligne est une unité. Quelle fraction est coloriée ?` }, `${n}/${d}`, [`${r}/${d}`, `${n}/${(e + 1) * d}`, `${d}/${n}`, `${e}/${r}`].filter(x => x !== `${n}/${d}`));
+  };
+  ajouterJeux('CM1', 'maths', [{ id: 'fractions-sup-1', titre: 'Fractions plus grandes que 1', emoji: '🍰', gen: genFractionsSup1 }]);
+  cours('CM1/maths/fractions-sup-1',
+    { t: 'Une fraction plus grande que 1', l: [
+      'Quand le numérateur (en haut) est plus grand que le dénominateur (en bas), la fraction est plus grande que 1.',
+      'Exemple avec des septièmes : 9/7, c\'est 9 parts d\'un septième, donc 9/7 = 9 × 1/7.',
+      'Avec 7 septièmes, on fait une unité entière : 7/7 = 1.',
+      'Donc 9/7 = 7/7 + 2/7 = <b>1 + 2/7</b>.'
+    ], ex: '9/4 = 4/4 + 4/4 + 1/4 = 2 + 1/4<br>🟧🟧🟧🟧<br>🟧🟧🟧🟧<br>🟧⬜⬜⬜' },
+    { t: 'Dans l\'autre sens', si: /seule fraction|faut-il/i, l: [
+      'Le dénominateur dit en combien de parts on coupe l\'unité : il faut ce nombre de parts pour faire 1 unité (7 septièmes = 1).',
+      'Pour écrire 1 + 2/7 en une seule fraction : 1 = 7/7, donc 7/7 + 2/7 = 9/7.'
+    ], ex: '2 + 1/5 = 5/5 + 5/5 + 1/5 = 11/5' });
+
+  // ---- Maths : les contenances (L, dL, cL, mL)
+  const OBJETS_CONT = [
+    ['d\'une cuillère à café', '🥄', '5 mL', ['5 L', '5 dL', '50 cL']], ['d\'un verre', '🥛', '20 cL', ['20 L', '2 mL', '200 L']],
+    ['d\'une bouteille d\'eau', '🍾', '1 L', ['1 mL', '10 L', '1 cL']], ['d\'une baignoire', '🛁', '150 L', ['150 cL', '15 mL', '1 L']],
+    ['d\'un seau', '🪣', '10 L', ['10 mL', '10 cL', '100 L']], ['d\'une tasse de chocolat', '☕', '25 cL', ['25 L', '25 mL', '2 L']],
+    ['d\'un arrosoir', '🚿', '5 L', ['5 mL', '5 cL', '500 L']], ['d\'une canette de soda', '🥤', '33 cL', ['33 L', '33 mL', '3 L']],
+    ['d\'une piscine', '🏊', '50 000 L', ['50 L', '500 cL', '5 L']], ['d\'un pot de yaourt', '🥣', '125 mL', ['125 L', '125 cL', '12 L']]
+  ];
+  const UNITES = { L: 1000, dL: 100, cL: 10, mL: 1 }; // en mL
+  const sp = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  const genContenances = () => {
+    const t = alea(0, 4);
+    if (t <= 1) { // conversion vers une unité plus petite
+      const [g, p] = pioche([['L', 'dL'], ['L', 'cL'], ['L', 'mL'], ['dL', 'cL'], ['dL', 'mL'], ['cL', 'mL']]);
+      const k = UNITES[g] / UNITES[p], n = alea(2, 9), r = n * k;
+      if (t === 0) return qcm({ visuel: '🧪', enonce: `${n} ${g} = ? ${p}` }, sp(r), [n * 10, n * 100, n * 1000, r * 10, n].filter(x => x !== r).map(sp));
+      return qcm({ visuel: '🧪', enonce: `${sp(r)} ${p} = ? ${g}` }, n, [r, n * 10, r / 10, n + 1].filter(x => x !== n && Number.isInteger(x)));
+    }
+    if (t === 2) {
+      const [nom, v, bon, f] = pioche(OBJETS_CONT);
+      return qcm({ visuel: v, enonce: `Quelle est la contenance ${nom} ?` }, bon, f);
+    }
+    if (t === 3) { // comparer
+      const a = alea(1, 3), b = pioche([50, 80, 120, 150, 250, 300]), plus = a * 100 > b;
+      const A = `${a} L`, B = `${b} cL`;
+      if (a * 100 === b) return genContenances();
+      return { visuel: '⚖️', enonce: `Qu'est-ce qui contient le plus : ${A} ou ${B} ?`, aide: '1 L = 100 cL', choix: [A, B, 'C\'est pareil'], bonne: plus ? A : B };
+    }
+    const a = alea(1, 3), b = pioche([25, 50, 75]); // additionner
+    return qcm({ visuel: '🧃', enonce: `${a} L + ${b} cL = ? cL` }, a * 100 + b, [a + b, a * 10 + b, a * 1000 + b, a * 100 + b + 10]);
+  };
+  ajouterJeux('CM1', 'maths', [{ id: 'contenances', titre: 'Les contenances', emoji: '🧪', gen: genContenances }]);
+  cours('CM1/maths/contenances',
+    { t: 'Les unités de contenance', l: [
+      'La contenance, c\'est la quantité de liquide qu\'un récipient peut contenir.',
+      'L\'unité principale est le <b>litre</b> (L).',
+      '1 L = 10 dL = 100 cL = 1 000 mL',
+      'Pour passer à une unité plus petite, on multiplie : le nombre devient plus grand.'
+    ], ex: '3 dL = 30 cL<br>2 L = 2 000 mL' },
+    { t: 'Ordres de grandeur', si: /contenance d/i, l: [
+      'Une cuillère à soupe : 15 mL · un bol : 35 cL · une grande bouteille : 2 L · un aquarium : 60 L',
+      'Pense à la taille de l\'objet : plus il est grand, plus il contient.'
+    ] });
+
+  // ---- Français : le présent des verbes du 1er groupe (-er)
+  const V1 = [['chanter', 'une chanson'], ['danser', 'avec ses amis'], ['jouer', 'au ballon'], ['parler', 'fort'], ['regarder', 'la télévision'],
+    ['marcher', 'dans la forêt'], ['aimer', 'les gâteaux'], ['écouter', 'la maîtresse'], ['sauter', 'à la corde'], ['porter', 'un sac'],
+    ['donner', 'du pain aux canards'], ['travailler', 'bien'], ['dessiner', 'un château'], ['ranger', 'sa chambre'], ['nager', 'vite'],
+    ['manger', 'une pomme'], ['commencer', 'la leçon'], ['lancer', 'la balle'], ['arriver', 'à l\'heure'], ['aider', 'son frère'],
+    ['oublier', 'son cahier'], ['crier', 'de joie'], ['préparer', 'le repas'], ['habiter', 'à Metz']];
+  const T1 = ['e', 'es', 'e', 'ons', 'ez', 'ent'];
+  const PR = ['je', 'tu', 'il', 'nous', 'vous', 'ils'];
+  const forme1 = (v, i) => { const r = v.slice(0, -2); return i === 3 ? (/g$/.test(r) ? r + 'eons' : /c$/.test(r) ? r.slice(0, -1) + 'çons' : r + 'ons') : r + T1[i]; };
+  const avec = (i, v, f) => i === 0 && /^[aeiouéèêh]/.test(v) ? `j'${f}` : `${PR[i]} ${f}`;
+  const PHRASES1 = [['Les enfants', 5, 'jouer', 'dans la cour.'], ['Nous', 3, 'manger', 'à la cantine.'], ['Tu', 1, 'chanter', 'très bien.'], ['Le chat', 2, 'sauter', 'sur le lit.'],
+    ['Vous', 4, 'regarder', 'les étoiles.'], ['Je', 0, 'dessiner', 'une maison.'], ['Nous', 3, 'commencer', 'la dictée.'], ['Mes parents', 5, 'travailler', 'beaucoup.'],
+    ['Tu', 1, 'ranger', 'tes jouets.'], ['Ma sœur', 2, 'danser', 'dans le salon.'], ['Vous', 4, 'parler', 'trop fort.'], ['Les poissons', 5, 'nager', 'dans l\'aquarium.'],
+    ['Nous', 3, 'ranger', 'la classe.'], ['Je', 0, 'porter', 'un bonnet.'], ['Elle', 2, 'aider', 'sa maman.'], ['Nous', 3, 'lancer', 'le ballon.']];
+  const V2X = ['finir', 'choisir', 'grandir', 'réussir', 'remplir', 'obéir', 'rougir', 'bâtir'], V3X = ['courir', 'partir', 'dormir', 'venir', 'prendre', 'faire', 'voir', 'dire'];
+  const genPresent1 = () => {
+    const t = alea(0, 5), [v] = pioche(V1), r = v.slice(0, -2);
+    if (t === 0) {
+      const i = alea(0, 5), bon = avec(i, v, forme1(v, i));
+      return qcm({ visuel: '⏳', enonce: `Conjugue « ${v} » au présent avec « ${PR[i]} ».` }, bon, [...T1, 'é', 'er', 'is', 'it', 'ont'].map(x => avec(i, v, r + x)).concat(i === 3 ? [avec(3, v, r + 'ons')] : []));
+    }
+    if (t === 1) {
+      const [w] = pioche(V1.filter(x => !/[gc]er$/.test(x[0]))), i = alea(0, 5), bon = '-' + T1[i];
+      return qcm({ visuel: '✏️', enonce: `Complète : ${avec(i, w, w.slice(0, -2))}___ (présent)` }, bon, ['-e', '-es', '-ons', '-ez', '-ent', '-is', '-it', '-er'].filter(x => x !== bon));
+    }
+    if (t === 2) {
+      const [suj, i, vb, fin] = pioche(PHRASES1);
+      return { type: 'saisie', visuel: '✍️', enonce: `${suj} ___ ${fin} (${vb})`, aide: 'Écris le verbe conjugué au présent.', dire: `${suj}, blanc, ${fin} Verbe ${vb}, au présent.`, bonne: forme1(vb, i) };
+    }
+    if (t === 3) { // le groupe
+      const [vb, bon] = pioche([[pioche(V1)[0], '1er groupe'], [pioche(V1)[0], '1er groupe'], [pioche(V2X), '2e groupe'], [pioche(V3X), '3e groupe']]);
+      return { visuel: '🔎', enonce: `Le verbe « ${vb} » est du…`, aide: '1er groupe : -er (sauf aller). 2e groupe : -ir avec « nous …issons ».', choix: ['1er groupe', '2e groupe', '3e groupe'], bonne: bon };
+    }
+    if (t === 4) { // nous mangeons / nous commençons
+      const [vb, bon, f] = pioche([['manger', 'nous mangeons', ['nous mangons', 'nous mangeont', 'nous mangez']], ['ranger', 'nous rangeons', ['nous rangons', 'nous rangeont', 'nous rangez']], ['nager', 'nous nageons', ['nous nagons', 'nous nageont', 'nous nagez']], ['commencer', 'nous commençons', ['nous commencons', 'nous commençont', 'nous commencez']], ['lancer', 'nous lançons', ['nous lancons', 'nous lançont', 'nous lancez']], ['avancer', 'nous avançons', ['nous avancons', 'nous avançont', 'nous avancez']]]);
+      return qcm({ visuel: '🧐', enonce: `Comment écrit-on « ${vb} » avec « nous » ?` }, bon, f);
+    }
+    const i = pioche([1, 3, 4, 5]); // le sujet (pas « e » : je et il s'écrivent pareil)
+    return qcm({ visuel: '👤', enonce: `Quel pronom va avec « … ${forme1(v, i)} » ?` }, ['Je', 'Tu', 'Il', 'Nous', 'Vous', 'Ils'][i], ['Tu', 'Nous', 'Vous', 'Ils']);
+  };
+  ajouterJeux('CM1', 'francais', [{ id: 'present-1er-groupe', titre: 'Présent : verbes du 1er groupe', emoji: '🌿', gen: genPresent1 }]);
+  cours('CM1/francais/present-1er-groupe',
+    { t: 'Les trois groupes de verbes', si: /groupe|est du…/i, surEnonce: true, l: [
+      '<b>1er groupe</b> : les verbes en <b>-er</b> (chanter, jouer…), sauf aller.',
+      '<b>2e groupe</b> : les verbes en <b>-ir</b> qui font « nous …issons » (applaudir → nous applaudissons).',
+      '<b>3e groupe</b> : tous les autres (courir, prendre, faire, voir, aller…).'
+    ], ex: 'tomber → 1er · applaudir → nous applaudissons → 2e · sortir → nous sortons → 3e' },
+    { t: 'Le présent du 1er groupe', l: [
+      'On enlève <b>-er</b> pour garder le radical : danser → dans.',
+      'Puis on ajoute : je -e · tu -es · il -e · nous -ons · vous -ez · ils -ent',
+      'Attention : -ger garde un <b>e</b> avec nous (nous plongeons), et -cer prend un <b>ç</b> (nous plaçons).'
+    ], ex: 'marcher : je marche, tu marches, il marche,<br>nous marchons, vous marchez, ils marchent' });
+})();
+
 /* ======================= Dates ======================= */
 const JOUR_MS = 864e5;
 const NOMS_JOURS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
@@ -97,11 +234,21 @@ function initJournalier(p) {
   if (!J.cadeauxEnAttente) J.cadeauxEnAttente = [];
   return J;
 }
-// Les notions vues en classe le mardi 29 septembre 2026 (demandées par le papa) : fractions et présent du 2e groupe.
-function premiereGraine(profils) {
-  const p = profils.find(x => x.classeReelle === 'CM1' && !x.journalier);
-  if (!p || isoJour() > '2026-10-02') return;
-  initJournalier(p).notions['2026-09-29'] = ['CM1:maths/fractions', 'CM1:maths/fractions-2', 'CM1:francais/present-2e-groupe'];
+// Notions vues en classe, données par le papa dans la conversation : on les coche pour lui (une seule fois par date).
+const GRAINES = [
+  { classe: 'CM1', date: '2026-09-29', notions: ['CM1:maths/fractions', 'CM1:maths/fractions-2', 'CM1:francais/present-2e-groupe'] },
+  { classe: 'CM1', date: '2026-10-01', notions: ['CM1:maths/fractions-sup-1', 'CM1:maths/decimaux', 'CM1:maths/contenances', 'CM1:francais/nature', 'CM1:francais/present-1er-groupe', 'CM1:francais/present-2e-groupe'] }
+];
+function semerNotions(profils) {
+  GRAINES.forEach(g => {
+    const p = profils.find(x => x.classeReelle === g.classe);
+    if (!p) return;
+    const J = initJournalier(p);
+    if (!J.graines) J.graines = {};
+    if (J.graines[g.date]) return;
+    J.graines[g.date] = 1;
+    if (!J.notions[g.date] && isoJour() <= ajouterJours(g.date, 4)) J.notions[g.date] = g.notions.slice();
+  });
 }
 // Une notion = un jeu d'une classe : « CM1:maths/fractions ».
 function trouverNotion(cle) {
@@ -277,7 +424,7 @@ function jeuJournalier(du, entrainement) {
       qs.push(q);
     }
     return qs;
-  }).slice(0, 15);
+  }).slice(0, 20);
   return { id: 'journalier', titre: 'Cours journalier', emoji: '📝', journalier: true, entrainement, sequence };
 }
 

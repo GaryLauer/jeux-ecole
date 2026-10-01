@@ -40,8 +40,8 @@ function charger() {
   d.profils = d.profils.map(p => ({ ...nouveauProfil(p.id, p.nom, p.niveau, p.avatar), ...p }));
   d.profils.forEach(p => { if (p.nom === 'Mon grand') p.nom = 'Ma grande'; if (p.nom === 'Mon petit') p.nom = 'Ma petite'; });
   if (d.limiteMiniJeux === undefined) d.limiteMiniJeux = 5;
-  premiereGraine(d.profils);
   d.profils.forEach(initJournalier);
+  semerNotions(d.profils);
   return d;
 }
 function sauver() { try { localStorage.setItem(CLE, JSON.stringify(donnees)); } catch (e) {} }
